@@ -14,24 +14,24 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Z.ai Code Scaffold - AI-Powered Development",
-  description: "Modern Next.js scaffold optimized for AI-powered development with Z.ai. Built with TypeScript, Tailwind CSS, and shadcn/ui.",
-  keywords: ["Z.ai", "Next.js", "TypeScript", "Tailwind CSS", "shadcn/ui", "AI development", "React"],
-  authors: [{ name: "Z.ai Team" }],
+  title: "alti.tune Desktop",
+  description: "A productionizing Windows 95-inspired desktop for music, visuals, news, and notes.",
+  keywords: ["alti.tune", "retro desktop", "Next.js", "Prisma", "media desktop", "Windows 95 UI"],
+  authors: [{ name: "alti.tune" }],
   icons: {
-    icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
+    icon: "/icons/w98/windows.png",
   },
   openGraph: {
-    title: "Z.ai Code Scaffold",
-    description: "AI-powered development with modern React stack",
-    url: "https://chat.z.ai",
-    siteName: "Z.ai",
+    title: "alti.tune Desktop",
+    description: "A retro desktop experience with real content, notes, and media playback.",
+    url: "https://alti.tune.desktop",
+    siteName: "alti.tune Desktop",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Z.ai Code Scaffold",
-    description: "AI-powered development with modern React stack",
+    title: "alti.tune Desktop",
+    description: "Retro desktop UI with real media and content management.",
   },
 };
 

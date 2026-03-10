@@ -13,20 +13,66 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
+model BiosProfile {
+  id        String   @id
+  bandName  String
+  bandBio   String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-model Post {
-  id        String   @id @default(cuid())
+model Track {
+  id       String @id
+  title    String
+  artist   String
+  album    String
+  duration Int
+  url      String
+  coverUrl String?
+  order    Int    @default(0)
+}
+
+model Photo {
+  id           String @id
+  title        String
+  url          String
+  thumbnailUrl String?
+  description  String?
+  order        Int    @default(0)
+}
+
+model Video {
+  id           String @id
+  title        String
+  url          String
+  thumbnailUrl String?
+  duration     Int
+  description  String?
+  order        Int    @default(0)
+}
+
+model NewsArticle {
+  id      String @id
+  title   String
+  content String
+  date    String
+  author  String?
+  order   Int    @default(0)
+}
+
+model Wallpaper {
+  id           String @id
+  title        String
+  url          String
+  thumbnailUrl String?
+  order        Int    @default(0)
+}
+
+model NoteDocument {
+  id        String   @id
   title     String
-  content   String?
-  published Boolean  @default(false)
-  authorId  String
+  content   String
+  order     Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

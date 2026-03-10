@@ -8,4 +8,5 @@ export {
   type Video,
   type NewsItem,
   type Wallpaper,
+  type NoteDocument,
 } from './adminBiosStore'
