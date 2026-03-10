@@ -1,12 +1,13 @@
-import type { NextConfig } from "next";
+import { initOpenNextCloudflareForDev } from '@opennextjs/cloudflare'
+import type { NextConfig } from 'next'
+
+void initOpenNextCloudflareForDev()
 
 const nextConfig: NextConfig = {
-  output: "standalone",
-  /* config options here */
   typescript: {
     ignoreBuildErrors: true,
   },
   reactStrictMode: false,
-};
+}
 
-export default nextConfig;
+export default nextConfig

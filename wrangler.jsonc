@@ -1,0 +1,38 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "main": ".open-next/worker.js",
+  "name": "new-glm5",
+  "compatibility_date": "2026-03-10",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "services": [
+    {
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "new-glm5"
+    }
+  ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "new-glm5-db",
+      "database_id": "replace-with-d1-database-id",
+      "migrations_dir": "prisma/migrations"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "NEXT_INC_CACHE_R2_BUCKET",
+      "bucket_name": "new-glm5-opennext-cache"
+    },
+    {
+      "binding": "MEDIA_BUCKET",
+      "bucket_name": "new-glm5-media"
+    }
+  ],
+  "vars": {
+    "ZAI_BASE_URL": "https://api.01.ai/v1"
+  }
+}

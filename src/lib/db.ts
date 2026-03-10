@@ -1,13 +1,22 @@
+import { getCloudflareContext } from '@opennextjs/cloudflare'
+import { PrismaD1 } from '@prisma/adapter-d1'
 import { PrismaClient } from '@prisma/client'
 
-const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined
+type D1Binding = ConstructorParameters<typeof PrismaD1>[0]
+
+type RequestContextEnv = {
+  DB?: D1Binding
 }
 
-export const db =
-  globalForPrisma.prisma ??
-  new PrismaClient({
-    log: ['query'],
-  })
+export async function getDb() {
+  const context = await getCloudflareContext({ async: true })
+  const database = (context.env as RequestContextEnv).DB
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = db
+  if (!database) {
+    throw new Error('Missing Cloudflare D1 binding: DB')
+  }
+
+  return new PrismaClient({
+    adapter: new PrismaD1(database),
+  })
+}

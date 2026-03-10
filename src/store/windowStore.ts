@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { persist, createJSONStorage } from 'zustand/middleware'
+import { fetchWindowStates, saveWindowStates } from '@services/windows'
 
 export interface WindowState {
   id: string
@@ -12,12 +12,17 @@ export interface WindowState {
   size: { width: number; height: number }
   zIndex: number
   props?: Record<string, unknown>
+  preMaxBounds?: { x: number; y: number; width: number; height: number } | null
 }
 
 interface WindowsState {
   windows: WindowState[]
   activeWindowId: string | null
   nextZIndex: number
+  hasHydratedFromServer: boolean
+  isHydrating: boolean
+  isSyncing: boolean
+  error: string | null
   
   // Actions
   openWindow: (window: Omit<WindowState, 'zIndex'>) => void
@@ -31,144 +36,200 @@ interface WindowsState {
   getWindowById: (id: string) => WindowState | undefined
   getVisibleWindows: () => WindowState[]
   getMinimizedWindows: () => WindowState[]
+  hydrate: () => Promise<void>
+  sync: () => Promise<void>
+  clearError: () => void
 }
 
-export const useWindowStore = create<WindowsState>()(
-  persist(
-    (set, get) => ({
-      windows: [],
-      activeWindowId: null,
-      nextZIndex: 1,
+function getNextWindowState(windows: WindowState[]) {
+  const highestZIndex = windows.reduce((max, window) => Math.max(max, window.zIndex), 0)
+  const activeWindow = [...windows]
+    .filter((window) => !window.isMinimized)
+    .sort((left, right) => right.zIndex - left.zIndex)[0]
+
+  return {
+    activeWindowId: activeWindow?.id ?? null,
+    nextZIndex: highestZIndex + 1,
+  }
+}
+
+export const useWindowStore = create<WindowsState>()((set, get) => ({
+  windows: [],
+  activeWindowId: null,
+  nextZIndex: 1,
+  hasHydratedFromServer: false,
+  isHydrating: false,
+  isSyncing: false,
+  error: null,
       
-      openWindow: (window) => {
-        const { windows, nextZIndex } = get()
-        const existingWindow = windows.find(w => w.id === window.id)
+  openWindow: (window) => {
+    const { windows, nextZIndex } = get()
+    const existingWindow = windows.find(w => w.id === window.id)
         
-        if (existingWindow) {
-          set({
-            activeWindowId: window.id,
-            windows: windows.map(w => 
-              w.id === window.id 
-                ? { ...w, zIndex: nextZIndex, isMinimized: false }
-                : w
-            ),
-            nextZIndex: nextZIndex + 1,
-          })
-          return
-        }
-        
-        set({
-          windows: [...windows, { ...window, zIndex: nextZIndex }],
-          activeWindowId: window.id,
-          nextZIndex: nextZIndex + 1,
-        })
-      },
-      
-      closeWindow: (id) => {
-        const { windows, activeWindowId } = get()
-        const newWindows = windows.filter(w => w.id !== id)
-        const newActiveId = activeWindowId === id 
-          ? newWindows.length > 0 
-            ? newWindows[newWindows.length - 1].id 
-            : null
-          : activeWindowId
-        
-        set({
-          windows: newWindows,
-          activeWindowId: newActiveId,
-        })
-      },
-      
-      minimizeWindow: (id) => {
-        const { windows, activeWindowId } = get()
-        const newWindows = windows.map(w =>
-          w.id === id ? { ...w, isMinimized: true } : w
-        )
-        
-        const visibleWindows = newWindows.filter(w => !w.isMinimized && w.id !== id)
-        const newActiveId = activeWindowId === id
-          ? visibleWindows.length > 0
-            ? visibleWindows.sort((a, b) => b.zIndex - a.zIndex)[0].id
-            : null
-          : activeWindowId
-        
-        set({
-          windows: newWindows,
-          activeWindowId: newActiveId,
-        })
-      },
-      
-      maximizeWindow: (id) => {
-        set(state => ({
-          windows: state.windows.map(w =>
-            w.id === id ? { ...w, isMaximized: true } : w
-          ),
-        }))
-      },
-      
-      restoreWindow: (id) => {
-        set(state => ({
-          windows: state.windows.map(w =>
-            w.id === id ? { ...w, isMaximized: false, isMinimized: false } : w
-          ),
-          activeWindowId: id,
-        }))
-      },
-      
-      focusWindow: (id) => {
-        const { windows, nextZIndex, activeWindowId } = get()
-        const window = windows.find(w => w.id === id)
-        
-        if (!window) return
-        if (activeWindowId === id && !window.isMinimized) return
-        
-        set({
-          windows: windows.map(w =>
-            w.id === id 
-              ? { ...w, zIndex: nextZIndex, isMinimized: false }
-              : w
-          ),
-          activeWindowId: id,
-          nextZIndex: nextZIndex + 1,
-        })
-      },
-      
-      updateWindowPosition: (id, position) => {
-        set(state => ({
-          windows: state.windows.map(w =>
-            w.id === id ? { ...w, position } : w
-          ),
-        }))
-      },
-      
-      updateWindowSize: (id, size) => {
-        set(state => ({
-          windows: state.windows.map(w =>
-            w.id === id ? { ...w, size } : w
-          ),
-        }))
-      },
-      
-      getWindowById: (id) => {
-        return get().windows.find(w => w.id === id)
-      },
-      
-      getVisibleWindows: () => {
-        return get().windows.filter(w => !w.isMinimized)
-      },
-      
-      getMinimizedWindows: () => {
-        return get().windows.filter(w => w.isMinimized)
-      },
-    }),
-    {
-      name: 'w98-windows',
-      storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({
-        windows: state.windows,
-        activeWindowId: state.activeWindowId,
-        nextZIndex: state.nextZIndex,
-      }),
+    if (existingWindow) {
+      set({
+        activeWindowId: window.id,
+        windows: windows.map(w => 
+          w.id === window.id 
+            ? { ...w, zIndex: nextZIndex, isMinimized: false }
+            : w
+        ),
+        nextZIndex: nextZIndex + 1,
+      })
+      return
     }
-  )
-)
+        
+    set({
+      windows: [...windows, { ...window, zIndex: nextZIndex }],
+      activeWindowId: window.id,
+      nextZIndex: nextZIndex + 1,
+    })
+  },
+      
+  closeWindow: (id) => {
+    const { windows, activeWindowId } = get()
+    const newWindows = windows.filter(w => w.id !== id)
+    const newActiveId = activeWindowId === id 
+      ? newWindows.length > 0 
+        ? newWindows[newWindows.length - 1].id 
+        : null
+      : activeWindowId
+        
+    set({
+      windows: newWindows,
+      activeWindowId: newActiveId,
+    })
+  },
+      
+  minimizeWindow: (id) => {
+    const { windows, activeWindowId } = get()
+    const newWindows = windows.map(w =>
+      w.id === id ? { ...w, isMinimized: true } : w
+    )
+        
+    const visibleWindows = newWindows.filter(w => !w.isMinimized && w.id !== id)
+    const newActiveId = activeWindowId === id
+      ? visibleWindows.length > 0
+        ? visibleWindows.sort((a, b) => b.zIndex - a.zIndex)[0].id
+        : null
+      : activeWindowId
+        
+    set({
+      windows: newWindows,
+      activeWindowId: newActiveId,
+    })
+  },
+      
+  maximizeWindow: (id) => {
+    set(state => ({
+      windows: state.windows.map(w =>
+        w.id === id ? { ...w, isMaximized: true } : w
+      ),
+    }))
+  },
+      
+  restoreWindow: (id) => {
+    set(state => ({
+      windows: state.windows.map(w =>
+        w.id === id ? { ...w, isMaximized: false, isMinimized: false } : w
+      ),
+      activeWindowId: id,
+    }))
+  },
+      
+  focusWindow: (id) => {
+    const { windows, nextZIndex, activeWindowId } = get()
+    const window = windows.find(w => w.id === id)
+        
+    if (!window) return
+    if (activeWindowId === id && !window.isMinimized) return
+        
+    set({
+      windows: windows.map(w =>
+        w.id === id 
+          ? { ...w, zIndex: nextZIndex, isMinimized: false }
+          : w
+      ),
+      activeWindowId: id,
+      nextZIndex: nextZIndex + 1,
+    })
+  },
+      
+  updateWindowPosition: (id, position) => {
+    set(state => ({
+      windows: state.windows.map(w =>
+        w.id === id ? { ...w, position } : w
+      ),
+    }))
+  },
+      
+  updateWindowSize: (id, size) => {
+    set(state => ({
+      windows: state.windows.map(w =>
+        w.id === id ? { ...w, size } : w
+      ),
+    }))
+  },
+      
+  getWindowById: (id) => {
+    return get().windows.find(w => w.id === id)
+  },
+      
+  getVisibleWindows: () => {
+    return get().windows.filter(w => !w.isMinimized)
+  },
+      
+  getMinimizedWindows: () => {
+    return get().windows.filter(w => w.isMinimized)
+  },
+
+  hydrate: async () => {
+    if (get().isHydrating || get().hasHydratedFromServer) return
+
+    set({ isHydrating: true, error: null })
+
+    try {
+      const windows = await fetchWindowStates()
+      const nextState = getNextWindowState(windows)
+
+      set({
+        windows,
+        activeWindowId: nextState.activeWindowId,
+        nextZIndex: nextState.nextZIndex,
+        hasHydratedFromServer: true,
+        isHydrating: false,
+      })
+    } catch (error) {
+      set({
+        hasHydratedFromServer: true,
+        isHydrating: false,
+        error: error instanceof Error ? error.message : 'Failed to load window state',
+      })
+    }
+  },
+
+  sync: async () => {
+    if (get().isSyncing || get().isHydrating || !get().hasHydratedFromServer) return
+
+    set({ isSyncing: true, error: null })
+
+    try {
+      const windows = await saveWindowStates(get().windows)
+      const nextState = getNextWindowState(windows)
+
+      set({
+        windows,
+        activeWindowId: nextState.activeWindowId,
+        nextZIndex: nextState.nextZIndex,
+        isSyncing: false,
+      })
+    } catch (error) {
+      set({
+        isSyncing: false,
+        error: error instanceof Error ? error.message : 'Failed to save window state',
+      })
+    }
+  },
+
+  clearError: () => set({ error: null }),
+}))

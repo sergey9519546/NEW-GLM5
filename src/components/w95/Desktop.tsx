@@ -48,7 +48,14 @@ const APP_COMPONENTS: Record<string, React.ComponentType> = {
 
 export function Desktop() {
   const { bootPhase, _hasHydrated } = useSystemStore()
-  const { windows, openWindow } = useWindowStore()
+  const {
+    windows,
+    openWindow,
+    hydrate: hydrateWindows,
+    sync: syncWindows,
+    hasHydratedFromServer: hasHydratedWindows,
+    isHydrating: isHydratingWindows,
+  } = useWindowStore()
   const { bandName, bandBio, hydrate, hasLoaded, isHydrating, error, clearError } = useAdminBiosStore()
   const { contextMenuPosition, setContextMenu, clearSelection } = useInputStore()
 
@@ -57,6 +64,26 @@ export function Desktop() {
       void hydrate()
     }
   }, [_hasHydrated, hasLoaded, hydrate, isHydrating])
+
+  useEffect(() => {
+    if (_hasHydrated && !hasHydratedWindows && !isHydratingWindows) {
+      void hydrateWindows()
+    }
+  }, [_hasHydrated, hasHydratedWindows, hydrateWindows, isHydratingWindows])
+
+  useEffect(() => {
+    if (!_hasHydrated || !hasHydratedWindows || isHydratingWindows) {
+      return
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      void syncWindows()
+    }, 500)
+
+    return () => {
+      window.clearTimeout(timeoutId)
+    }
+  }, [_hasHydrated, hasHydratedWindows, isHydratingWindows, syncWindows, windows])
   
   const handleIconDoubleClick = (id: string, title: string, icon: string) => {
     if (id === 'admin') {

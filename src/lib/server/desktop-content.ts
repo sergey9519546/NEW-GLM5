@@ -1,4 +1,4 @@
-import { db } from '@/lib/db'
+import { getDb } from '@/lib/db'
 import {
   cloneDesktopContent,
   DEFAULT_DESKTOP_CONTENT,
@@ -8,6 +8,7 @@ import {
 const BIOS_PROFILE_ID = 'main'
 
 export async function getDesktopContent(): Promise<DesktopContentSnapshot> {
+  const db = await getDb()
   const profile = await db.biosProfile.findUnique({ where: { id: BIOS_PROFILE_ID } })
 
   if (!profile) {
@@ -41,6 +42,8 @@ export async function getDesktopContent(): Promise<DesktopContentSnapshot> {
 export async function replaceDesktopContent(
   content: DesktopContentSnapshot,
 ): Promise<DesktopContentSnapshot> {
+  const db = await getDb()
+
   await db.$transaction(async (tx) => {
     await tx.biosProfile.upsert({
       where: { id: BIOS_PROFILE_ID },
