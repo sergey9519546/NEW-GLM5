@@ -34,6 +34,7 @@ const APP_COMPONENTS: Record<string, React.ComponentType> = {
   explorer: ExplorerApp,
   minesweeper: MinesweeperApp,
   snake: SnakeApp,
+  admin: AdminPanel,
 }
 
 export function Desktop() {
@@ -174,7 +175,7 @@ export function Desktop() {
       
       {/* Windows */}
       {bootPhase === 'desktop' && windows.map(window => {
-        const AppComponent = window.component === 'admin' ? AdminPanel : APP_COMPONENTS[window.component]
+        const AppComponent = APP_COMPONENTS[window.component]
         
         if (!AppComponent) return null
         

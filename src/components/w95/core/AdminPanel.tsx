@@ -40,12 +40,28 @@ export function AdminPanel() {
   const [password, setPassword] = useState('')
   const [activeTab, setActiveTab] = useState<ContentTab>('general')
   
-  const handleLogin = () => {
-    if (password === 'altitune' || password === 'admin') {
-      setAdminUnlocked(true)
-      setPassword('')
-    } else {
-      alert('Invalid password')
+  const [loginError, setLoginError] = useState('')
+  const [isLoggingIn, setIsLoggingIn] = useState(false)
+
+  const handleLogin = async () => {
+    setLoginError('')
+    setIsLoggingIn(true)
+    try {
+      const res = await fetch('/api/auth/unlock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ passphrase: password }),
+      })
+      if (res.ok) {
+        setAdminUnlocked(true)
+        setPassword('')
+      } else {
+        setLoginError('Invalid password')
+      }
+    } catch {
+      setLoginError('Connection error')
+    } finally {
+      setIsLoggingIn(false)
     }
   }
   
@@ -66,9 +82,10 @@ export function AdminPanel() {
             autoFocus
           />
           <div className="admin-login-buttons">
-            <button className="win95-button" onClick={handleLogin}>OK</button>
+            <button className="win95-button" onClick={handleLogin} disabled={isLoggingIn}>{isLoggingIn ? 'Verifying...' : 'OK'}</button>
             <button className="win95-button" onClick={() => setPassword('')}>Cancel</button>
           </div>
+          {loginError && <p className="admin-hint" style={{ color: 'var(--w98-red, red)' }}>{loginError}</p>}
           <p className="admin-hint">Hint: altitune</p>
         </div>
       </div>

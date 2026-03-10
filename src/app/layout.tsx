@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import "./w98-font.css";
 import "./globals.css";
-import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
   title: "alti.tune Desktop",
@@ -36,7 +35,6 @@ export default function RootLayout({
         className="antialiased bg-background text-foreground"
       >
         {children}
-        <Toaster />
       </body>
     </html>
   );
