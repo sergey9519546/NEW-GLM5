@@ -11,6 +11,8 @@
     "cf:deploy": "opennextjs-cloudflare deploy",
     "lint": "eslint .",
     "db:push": "prisma db push",
+    "db:d1:local": "wrangler d1 migrations apply DB --local",
+    "db:d1:remote": "wrangler d1 migrations apply DB --remote",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:reset": "prisma migrate reset"
