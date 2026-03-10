@@ -19,36 +19,76 @@ export function MusicApp() {
   
   const handlePlayTrack = (track: typeof tracks[0]) => {
     if (currentTrack?.id === track.id) {
-      setIsPlaying(!isPlaying)
+      if (isPlaying) {
+        audioRef.current?.pause()
+        setIsPlaying(false)
+      } else {
+        void audioRef.current?.play()
+        setIsPlaying(true)
+      }
     } else {
       setCurrentTrack(track)
-      setIsPlaying(true)
       setProgress(0)
+      setIsPlaying(true)
     }
   }
+
+  useEffect(() => {
+    if (!audioRef.current || !currentTrack) {
+      return
+    }
+
+    audioRef.current.src = currentTrack.url
+    audioRef.current.load()
+    if (isPlaying) {
+      void audioRef.current.play()
+    }
+  }, [currentTrack, isPlaying])
+
+  useEffect(() => {
+    const audio = audioRef.current
+
+    if (!audio) {
+      return
+    }
+
+    const handleTimeUpdate = () => {
+      const nextProgress = audio.duration > 0 ? (audio.currentTime / audio.duration) * 100 : 0
+      setProgress(nextProgress)
+    }
+
+    const handleEnded = () => {
+      const currentIndex = tracks.findIndex((track) => track.id === currentTrack?.id)
+      if (currentIndex >= 0 && currentIndex < tracks.length - 1) {
+        setCurrentTrack(tracks[currentIndex + 1])
+        return
+      }
+
+      setIsPlaying(false)
+      setProgress(100)
+    }
+
+    audio.addEventListener('timeupdate', handleTimeUpdate)
+    audio.addEventListener('ended', handleEnded)
+
+    return () => {
+      audio.removeEventListener('timeupdate', handleTimeUpdate)
+      audio.removeEventListener('ended', handleEnded)
+    }
+  }, [currentTrack, tracks])
   
   useEffect(() => {
-    if (currentTrack && isPlaying) {
-      const interval = setInterval(() => {
-        setProgress(prev => {
-          if (prev >= 100) {
-            // Play next track
-            const currentIndex = tracks.findIndex(t => t.id === currentTrack.id)
-            if (currentIndex < tracks.length - 1) {
-              setCurrentTrack(tracks[currentIndex + 1])
-              return 0
-            } else {
-              setIsPlaying(false)
-              return 100
-            }
-          }
-          return prev + (100 / currentTrack.duration)
-        })
-      }, 1000)
-      
-      return () => clearInterval(interval)
+    if (!audioRef.current) {
+      return
     }
-  }, [currentTrack, isPlaying, tracks])
+
+    if (isPlaying) {
+      void audioRef.current.play()
+      return
+    }
+
+    audioRef.current.pause()
+  }, [isPlaying])
   
   return (
     <div className="music-app">
@@ -62,7 +102,7 @@ export function MusicApp() {
           <div className="music-cover">
             {currentTrack ? (
               <div className="cover-placeholder">
-                <img src={W98_ICONS.mediaPlayer} alt="" />
+                <img src={currentTrack.coverUrl || W98_ICONS.mediaPlayer} alt={currentTrack.title} />
               </div>
             ) : (
               <div className="cover-placeholder empty">
@@ -109,6 +149,7 @@ export function MusicApp() {
             if (currentIndex > 0) {
               setCurrentTrack(tracks[currentIndex - 1])
               setProgress(0)
+              setIsPlaying(true)
             }
           }}>⏮</button>
           <button className="control-btn play" onClick={() => currentTrack && setIsPlaying(!isPlaying)}>
@@ -119,16 +160,28 @@ export function MusicApp() {
             if (currentIndex < tracks.length - 1) {
               setCurrentTrack(tracks[currentIndex + 1])
               setProgress(0)
+              setIsPlaying(true)
             }
           }}>⏭</button>
         </div>
         <div className="volume-control">
           <img src={W98_ICONS.volume} alt="" />
-          <input type="range" className="volume-slider" min="0" max="100" defaultValue="80" />
+          <input
+            type="range"
+            className="volume-slider"
+            min="0"
+            max="100"
+            defaultValue="80"
+            onChange={(e) => {
+              if (audioRef.current) {
+                audioRef.current.volume = Number(e.target.value) / 100
+              }
+            }}
+          />
         </div>
       </div>
       
-      <audio ref={audioRef} />
+      <audio ref={audioRef} preload="metadata" />
     </div>
   )
 }

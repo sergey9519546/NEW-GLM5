@@ -3,13 +3,42 @@
 import { useState } from 'react'
 import { useSystemStore, useAdminBiosStore } from '@/store'
 import { W98_ICONS } from '@/lib/icons'
-import { WindowFrame } from './WindowFrame'
+
+type ContentTab = 'general' | 'tracks' | 'photos' | 'videos' | 'news'
+
+function createId(prefix: string) {
+  return `${prefix}-${globalThis.crypto.randomUUID()}`
+}
 
 export function AdminPanel() {
   const { adminUnlocked, setAdminUnlocked } = useSystemStore()
-  const { bandName, bandBio, setBandName, setBandBio, resetToDefaults } = useAdminBiosStore()
+  const {
+    bandName,
+    bandBio,
+    tracks,
+    photos,
+    videos,
+    news,
+    setBandName,
+    setBandBio,
+    addTrack,
+    updateTrack,
+    removeTrack,
+    addPhoto,
+    updatePhoto,
+    removePhoto,
+    addVideo,
+    updateVideo,
+    removeVideo,
+    addNews,
+    updateNews,
+    removeNews,
+    saveContent,
+    resetToDefaults,
+    isSaving,
+  } = useAdminBiosStore()
   const [password, setPassword] = useState('')
-  const [activeTab, setActiveTab] = useState<'general' | 'content'>('general')
+  const [activeTab, setActiveTab] = useState<ContentTab>('general')
   
   const handleLogin = () => {
     if (password === 'altitune' || password === 'admin') {
@@ -56,10 +85,28 @@ export function AdminPanel() {
           General
         </button>
         <button 
-          className={`admin-tab ${activeTab === 'content' ? 'active' : ''}`}
-          onClick={() => setActiveTab('content')}
+          className={`admin-tab ${activeTab === 'tracks' ? 'active' : ''}`}
+          onClick={() => setActiveTab('tracks')}
         >
-          Content
+          Tracks
+        </button>
+        <button 
+          className={`admin-tab ${activeTab === 'photos' ? 'active' : ''}`}
+          onClick={() => setActiveTab('photos')}
+        >
+          Photos
+        </button>
+        <button 
+          className={`admin-tab ${activeTab === 'videos' ? 'active' : ''}`}
+          onClick={() => setActiveTab('videos')}
+        >
+          Videos
+        </button>
+        <button 
+          className={`admin-tab ${activeTab === 'news' ? 'active' : ''}`}
+          onClick={() => setActiveTab('news')}
+        >
+          News
         </button>
       </div>
       
@@ -86,6 +133,9 @@ export function AdminPanel() {
               />
             </div>
             <div className="admin-actions">
+              <button className="win95-button" onClick={() => void saveContent()} disabled={isSaving}>
+                {isSaving ? 'Saving...' : 'Save Changes'}
+              </button>
               <button className="win95-button" onClick={resetToDefaults}>
                 Reset to Defaults
               </button>
@@ -95,31 +145,167 @@ export function AdminPanel() {
             </div>
           </div>
         )}
-        
-        {activeTab === 'content' && (
+
+        {activeTab === 'tracks' && (
           <div className="admin-section">
-            <h3>Content Management</h3>
-            <p className="admin-info">
-              Content is managed through the BIOS system. Changes are saved automatically.
-            </p>
-            <div className="admin-content-stats">
-              <div className="stat-item">
-                <span>Tracks:</span>
-                <span>{useAdminBiosStore.getState().tracks.length}</span>
-              </div>
-              <div className="stat-item">
-                <span>Photos:</span>
-                <span>{useAdminBiosStore.getState().photos.length}</span>
-              </div>
-              <div className="stat-item">
-                <span>Videos:</span>
-                <span>{useAdminBiosStore.getState().videos.length}</span>
-              </div>
-              <div className="stat-item">
-                <span>News:</span>
-                <span>{useAdminBiosStore.getState().news.length}</span>
-              </div>
+            <div className="admin-actions">
+              <button
+                className="win95-button"
+                onClick={() => addTrack({
+                  id: createId('track'),
+                  title: 'New Track',
+                  artist: bandName,
+                  album: 'Desktop Session',
+                  duration: 180,
+                  url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+                })}
+              >
+                Add Track
+              </button>
+              <button className="win95-button" onClick={() => void saveContent()} disabled={isSaving}>
+                {isSaving ? 'Saving...' : 'Save Tracks'}
+              </button>
             </div>
+            {tracks.map((track) => (
+              <div key={track.id} className="admin-field-group">
+                <div className="admin-field">
+                  <label>Title</label>
+                  <input type="text" value={track.title} onChange={(e) => updateTrack(track.id, { title: e.target.value })} className="win95-input" />
+                </div>
+                <div className="admin-field">
+                  <label>Artist</label>
+                  <input type="text" value={track.artist} onChange={(e) => updateTrack(track.id, { artist: e.target.value })} className="win95-input" />
+                </div>
+                <div className="admin-field">
+                  <label>Album</label>
+                  <input type="text" value={track.album} onChange={(e) => updateTrack(track.id, { album: e.target.value })} className="win95-input" />
+                </div>
+                <div className="admin-field">
+                  <label>Media URL</label>
+                  <input type="text" value={track.url} onChange={(e) => updateTrack(track.id, { url: e.target.value })} className="win95-input" />
+                </div>
+                <div className="admin-field admin-inline-actions">
+                  <button className="win95-button" onClick={() => removeTrack(track.id)}>Remove</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {activeTab === 'photos' && (
+          <div className="admin-section">
+            <div className="admin-actions">
+              <button
+                className="win95-button"
+                onClick={() => addPhoto({
+                  id: createId('photo'),
+                  title: 'New Photo',
+                  url: 'https://picsum.photos/1200/900?random=44',
+                  thumbnailUrl: 'https://picsum.photos/320/240?random=44',
+                })}
+              >
+                Add Photo
+              </button>
+              <button className="win95-button" onClick={() => void saveContent()} disabled={isSaving}>
+                {isSaving ? 'Saving...' : 'Save Photos'}
+              </button>
+            </div>
+            {photos.map((photo) => (
+              <div key={photo.id} className="admin-field-group">
+                <div className="admin-field">
+                  <label>Title</label>
+                  <input type="text" value={photo.title} onChange={(e) => updatePhoto(photo.id, { title: e.target.value })} className="win95-input" />
+                </div>
+                <div className="admin-field">
+                  <label>Image URL</label>
+                  <input type="text" value={photo.url} onChange={(e) => updatePhoto(photo.id, { url: e.target.value })} className="win95-input" />
+                </div>
+                <div className="admin-field">
+                  <label>Description</label>
+                  <textarea value={photo.description || ''} onChange={(e) => updatePhoto(photo.id, { description: e.target.value })} className="win95-textarea" rows={3} />
+                </div>
+                <div className="admin-field admin-inline-actions">
+                  <button className="win95-button" onClick={() => removePhoto(photo.id)}>Remove</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {activeTab === 'videos' && (
+          <div className="admin-section">
+            <div className="admin-actions">
+              <button
+                className="win95-button"
+                onClick={() => addVideo({
+                  id: createId('video'),
+                  title: 'New Video',
+                  url: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
+                  duration: 30,
+                })}
+              >
+                Add Video
+              </button>
+              <button className="win95-button" onClick={() => void saveContent()} disabled={isSaving}>
+                {isSaving ? 'Saving...' : 'Save Videos'}
+              </button>
+            </div>
+            {videos.map((video) => (
+              <div key={video.id} className="admin-field-group">
+                <div className="admin-field">
+                  <label>Title</label>
+                  <input type="text" value={video.title} onChange={(e) => updateVideo(video.id, { title: e.target.value })} className="win95-input" />
+                </div>
+                <div className="admin-field">
+                  <label>Video URL</label>
+                  <input type="text" value={video.url} onChange={(e) => updateVideo(video.id, { url: e.target.value })} className="win95-input" />
+                </div>
+                <div className="admin-field">
+                  <label>Description</label>
+                  <textarea value={video.description || ''} onChange={(e) => updateVideo(video.id, { description: e.target.value })} className="win95-textarea" rows={3} />
+                </div>
+                <div className="admin-field admin-inline-actions">
+                  <button className="win95-button" onClick={() => removeVideo(video.id)}>Remove</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {activeTab === 'news' && (
+          <div className="admin-section">
+            <div className="admin-actions">
+              <button
+                className="win95-button"
+                onClick={() => addNews({
+                  id: createId('news'),
+                  title: 'New Update',
+                  content: 'Write your update here.',
+                  date: new Date().toISOString().slice(0, 10),
+                  author: 'Admin BIOS',
+                })}
+              >
+                Add Article
+              </button>
+              <button className="win95-button" onClick={() => void saveContent()} disabled={isSaving}>
+                {isSaving ? 'Saving...' : 'Save News'}
+              </button>
+            </div>
+            {news.map((item) => (
+              <div key={item.id} className="admin-field-group">
+                <div className="admin-field">
+                  <label>Title</label>
+                  <input type="text" value={item.title} onChange={(e) => updateNews(item.id, { title: e.target.value })} className="win95-input" />
+                </div>
+                <div className="admin-field">
+                  <label>Content</label>
+                  <textarea value={item.content} onChange={(e) => updateNews(item.id, { content: e.target.value })} className="win95-textarea" rows={6} />
+                </div>
+                <div className="admin-field admin-inline-actions">
+                  <button className="win95-button" onClick={() => removeNews(item.id)}>Remove</button>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>

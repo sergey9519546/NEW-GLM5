@@ -120,3 +120,91 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer components {
+  .desktop-banner {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 1200;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    max-width: 32rem;
+    background: rgba(255, 255, 255, 0.92);
+    border: 2px solid #000;
+    box-shadow: 2px 2px 0 #000;
+  }
+
+  .desktop-intro {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 1100;
+    width: min(30rem, calc(100vw - 2rem));
+    padding: 1rem;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(226, 233, 240, 0.96));
+    border: 2px solid #000;
+    box-shadow: 3px 3px 0 #000;
+  }
+
+  .desktop-intro-title-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .desktop-intro-icon {
+    width: 2rem;
+    height: 2rem;
+    object-fit: contain;
+  }
+
+  .desktop-intro-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    line-height: 1.1;
+  }
+
+  .desktop-intro-subtitle {
+    margin: 0.25rem 0 0;
+    font-size: 0.875rem;
+  }
+
+  .desktop-intro-copy {
+    margin: 0 0 1rem;
+    font-size: 0.9rem;
+    line-height: 1.45;
+  }
+
+  .desktop-intro-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .desktop-intro-hint {
+    margin: 0;
+    font-size: 0.75rem;
+    color: #223;
+  }
+
+  @media (max-width: 768px) {
+    .desktop-intro {
+      left: 1rem;
+      right: 1rem;
+      width: auto;
+      top: 0.75rem;
+    }
+
+    .desktop-banner {
+      left: 1rem;
+      right: 1rem;
+      max-width: none;
+    }
+  }
+}

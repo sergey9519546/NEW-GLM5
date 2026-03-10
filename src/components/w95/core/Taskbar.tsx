@@ -6,7 +6,7 @@ import { W98_ICONS } from '@/lib/icons'
 import { StartMenu } from './StartMenu'
 
 export function Taskbar() {
-  const { windows, activeWindowId, focusWindow } = useWindowStore()
+  const { windows, activeWindowId, focusWindow, minimizeWindow } = useWindowStore()
   const { bootPhase } = useSystemStore()
   const [showStartMenu, setShowStartMenu] = useState(false)
   const [currentTime, setCurrentTime] = useState(new Date())
@@ -63,7 +63,14 @@ export function Taskbar() {
               <button
                 key={window.id}
                 className={`taskbar-app ${activeWindowId === window.id && !window.isMinimized ? 'active' : ''}`}
-                onClick={() => focusWindow(window.id)}
+                onClick={() => {
+                  if (activeWindowId === window.id && !window.isMinimized) {
+                    minimizeWindow(window.id)
+                    return
+                  }
+
+                  focusWindow(window.id)
+                }}
               >
                 <img src={window.icon} alt="" className="taskbar-app-icon" />
                 <span className="taskbar-app-title">{window.title}</span>

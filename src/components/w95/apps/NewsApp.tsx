@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import ReactMarkdown from 'react-markdown'
 import { useAdminBiosStore } from '@/store'
 
 export function NewsApp() {
@@ -44,7 +45,7 @@ export function NewsApp() {
               </div>
             </div>
             <div className="news-article-content">
-              {selectedNews.content}
+              <ReactMarkdown>{selectedNews.content}</ReactMarkdown>
             </div>
           </div>
         ) : (

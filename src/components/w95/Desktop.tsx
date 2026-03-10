@@ -1,6 +1,7 @@
 'use client'
 
-import { useSystemStore, useWindowStore, useInputStore } from '@/store'
+import { useEffect } from 'react'
+import { useSystemStore, useWindowStore, useInputStore, useAdminBiosStore } from '@/store'
 import { W98_ICONS } from '@/lib/icons'
 import { BootScreen, Taskbar, WindowFrame, DesktopIcon, ContextMenu, AdminPanel } from './core'
 import {
@@ -48,7 +49,14 @@ const APP_COMPONENTS: Record<string, React.ComponentType> = {
 export function Desktop() {
   const { bootPhase, _hasHydrated } = useSystemStore()
   const { windows, openWindow } = useWindowStore()
+  const { bandName, bandBio, hydrate, hasLoaded, isHydrating, error, clearError } = useAdminBiosStore()
   const { contextMenuPosition, setContextMenu, clearSelection } = useInputStore()
+
+  useEffect(() => {
+    if (_hasHydrated && !hasLoaded && !isHydrating) {
+      void hydrate()
+    }
+  }, [_hasHydrated, hasLoaded, hydrate, isHydrating])
   
   const handleIconDoubleClick = (id: string, title: string, icon: string) => {
     if (id === 'admin') {
@@ -106,8 +114,8 @@ export function Desktop() {
   const contextMenuItems = [
     { label: 'Refresh', action: () => window.location.reload() },
     { divider: true, label: '' },
-    { label: 'New Folder', action: () => {} },
-    { label: 'New Shortcut', action: () => {} },
+    { label: 'Open Admin BIOS', action: () => handleIconDoubleClick('admin', 'Admin BIOS', W98_ICONS.computer) },
+    { label: 'Open Notepad', action: () => handleIconDoubleClick('notepad', 'Notepad', W98_ICONS.notepad) },
     { divider: true, label: '' },
     { label: 'Properties', action: () => {} },
   ]
@@ -124,6 +132,38 @@ export function Desktop() {
     <div className="desktop" onClick={handleDesktopClick} onContextMenu={handleDesktopContextMenu}>
       {/* Boot Screen */}
       <BootScreen />
+
+      {bootPhase === 'desktop' && error && (
+        <div className="desktop-banner" role="status" aria-live="polite">
+          <span>{error}</span>
+          <button className="win95-button small" onClick={clearError}>Dismiss</button>
+        </div>
+      )}
+
+      {bootPhase === 'desktop' && !error && (
+        <section className="desktop-intro" aria-label="Desktop overview">
+          <div className="desktop-intro-title-row">
+            <img src={W98_ICONS.computer} alt="" aria-hidden="true" className="desktop-intro-icon" />
+            <div>
+              <h1 className="desktop-intro-title">{bandName}</h1>
+              <p className="desktop-intro-subtitle">Production desktop for media, notes, and live content control.</p>
+            </div>
+          </div>
+          <p className="desktop-intro-copy">{bandBio}</p>
+          <div className="desktop-intro-actions">
+            <button className="win95-button" onClick={() => handleIconDoubleClick('music', 'Music', W98_ICONS.mediaPlayer)}>
+              Open Music
+            </button>
+            <button className="win95-button" onClick={() => handleIconDoubleClick('news', 'News', W98_ICONS.document)}>
+              Open News
+            </button>
+            <button className="win95-button" onClick={() => handleIconDoubleClick('admin', 'Admin BIOS', W98_ICONS.computer)}>
+              Open Admin BIOS
+            </button>
+          </div>
+          <p className="desktop-intro-hint">Tip: right-click the desktop to open Admin BIOS or launch Notepad quickly.</p>
+        </section>
+      )}
       
       {/* Desktop Icons */}
       {bootPhase === 'desktop' && (

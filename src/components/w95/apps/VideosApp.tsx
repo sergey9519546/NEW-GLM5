@@ -1,11 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useAdminBiosStore } from '@/store'
 
 export function VideosApp() {
   const { videos } = useAdminBiosStore()
-  const [selectedVideo, setSelectedVideo] = useState<typeof videos[0] | null>(null)
+  const [selectedVideoId, setSelectedVideoId] = useState('')
+  const [isPlaying, setIsPlaying] = useState(false)
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const selectedVideo = videos.find((video) => video.id === selectedVideoId) ?? videos[0] ?? null
   
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
@@ -21,7 +24,7 @@ export function VideosApp() {
             <div
               key={video.id}
               className={`video-item ${selectedVideo?.id === video.id ? 'active' : ''}`}
-              onClick={() => setSelectedVideo(video)}
+              onClick={() => setSelectedVideoId(video.id)}
             >
               <div className="video-thumb">
                 {video.thumbnailUrl ? (
@@ -46,20 +49,34 @@ export function VideosApp() {
               {selectedVideo.title}
             </div>
             <div className="video-player-content">
-              <div className="video-placeholder">
-                <div className="play-icon">▶</div>
-                <span>Video Player</span>
-                <span className="video-note">(Demo - no actual video)</span>
-              </div>
+              <video
+                ref={videoRef}
+                src={selectedVideo.url}
+                className="video-surface"
+                controls={false}
+                poster={selectedVideo.thumbnailUrl}
+                onPlay={() => setIsPlaying(true)}
+                onPause={() => setIsPlaying(false)}
+                onEnded={() => setIsPlaying(false)}
+              />
             </div>
             <div className="video-player-controls">
               <div className="video-progress">
-                <div className="video-progress-bar" />
+                <div className="video-progress-bar">
+                  <div className="video-progress-fill" style={{ width: isPlaying ? '100%' : '0%' }} />
+                </div>
               </div>
               <div className="video-buttons">
-                <button className="win95-button">▶ Play</button>
-                <button className="win95-button">⏸ Pause</button>
-                <button className="win95-button">⏹ Stop</button>
+                <button className="win95-button" onClick={() => void videoRef.current?.play()}>▶ Play</button>
+                <button className="win95-button" onClick={() => videoRef.current?.pause()}>⏸ Pause</button>
+                <button className="win95-button" onClick={() => {
+                  if (!videoRef.current) {
+                    return
+                  }
+                  videoRef.current.pause()
+                  videoRef.current.currentTime = 0
+                  setIsPlaying(false)
+                }}>⏹ Stop</button>
               </div>
             </div>
             {selectedVideo.description && (
