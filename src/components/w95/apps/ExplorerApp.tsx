@@ -1,103 +1,120 @@
 'use client'
 
-import { useMemo, useState } from 'react'
-import { useAdminBiosStore } from '@/store'
+import { useCallback, useEffect, useState } from 'react'
+import { useFileSystemStore, useWindowStore } from '@/store'
 import { W98_ICONS } from '@/lib/icons'
+import { getApp } from '@/lib/appRegistry'
+import type { VfsEntry } from '@/lib/personal-state'
 
-interface FileItem {
-  id: string
-  name: string
-  type: 'folder' | 'file'
-  icon: string
-  size?: string
-  modified?: string
+function iconForEntry(entry: VfsEntry): string {
+  if (entry.type === 'folder') return W98_ICONS.folder
+  if (entry.mimeType?.startsWith('text/')) return W98_ICONS.notepadFile
+  if (entry.mimeType?.startsWith('image/')) return W98_ICONS.paint
+  if (entry.mimeType?.startsWith('audio/')) return W98_ICONS.mediaPlayer
+  if (entry.mimeType?.startsWith('video/')) return W98_ICONS.mediaPlayer
+  return W98_ICONS.document
+}
+
+function formatSize(bytes: number): string {
+  if (bytes === 0) return '-'
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${Math.ceil(bytes / 1024)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
 export function ExplorerApp() {
-  const { notes, tracks, photos, videos, news } = useAdminBiosStore()
-  const [selectedFile, setSelectedFile] = useState<string | null>(null)
-  const [viewMode, setViewMode] = useState<'icons' | 'list' | 'details'>('icons')
-  const [history, setHistory] = useState<string[]>(['Desktop'])
-  const [historyIndex, setHistoryIndex] = useState(0)
+  const {
+    currentFolder,
+    entries,
+    breadcrumb,
+    selectedIds,
+    viewMode,
+    isLoading,
+    error,
+    navigateTo,
+    navigateUp,
+    refresh,
+    select,
+    clearSelection,
+    createFolder,
+    remove,
+    rename,
+    setViewMode,
+  } = useFileSystemStore()
 
-  const currentPath = history[historyIndex]
+  const openWindow = useWindowStore((s) => s.openWindow)
 
-  const fileSystem = useMemo<Record<string, FileItem[]>>(() => ({
-    Desktop: [
-      { id: 'folder-media', name: 'Media Library', type: 'folder', icon: W98_ICONS.folder },
-      { id: 'folder-news', name: 'Newsroom', type: 'folder', icon: W98_ICONS.folder },
-      { id: 'folder-notes', name: 'Notes', type: 'folder', icon: W98_ICONS.folder },
-    ],
-    'Desktop\\Media Library': [
-      ...tracks.map((track) => ({ id: track.id, name: `${track.title}.mp3`, type: 'file' as const, icon: W98_ICONS.mediaPlayer, size: `${Math.max(1, Math.round(track.duration / 60))} MB`, modified: 'Today' })),
-      ...photos.map((photo) => ({ id: photo.id, name: `${photo.title}.jpg`, type: 'file' as const, icon: W98_ICONS.paint, size: 'Image', modified: 'Today' })),
-      ...videos.map((video) => ({ id: video.id, name: `${video.title}.mp4`, type: 'file' as const, icon: W98_ICONS.mediaPlayer, size: `${Math.max(1, Math.round(video.duration / 15))} MB`, modified: 'Today' })),
-    ],
-    'Desktop\\Newsroom': news.map((item) => ({
-      id: item.id,
-      name: `${item.title}.md`,
-      type: 'file' as const,
-      icon: W98_ICONS.document,
-      size: `${Math.max(1, Math.ceil(item.content.length / 1200))} KB`,
-      modified: item.date,
-    })),
-    'Desktop\\Notes': notes.map((note) => ({
-      id: note.id,
-      name: note.title,
-      type: 'file' as const,
-      icon: W98_ICONS.notepadFile,
-      size: `${Math.max(1, Math.ceil(note.content.length / 1200))} KB`,
-      modified: note.updatedAt ? new Date(note.updatedAt).toLocaleDateString() : 'Today',
-    })),
-  }), [news, notes, photos, tracks, videos])
+  const [renameId, setRenameId] = useState<string | null>(null)
+  const [renameValue, setRenameValue] = useState('')
 
-  const currentFiles = fileSystem[currentPath] ?? []
+  // Navigate to root on mount
+  useEffect(() => {
+    if (!currentFolder) {
+      void navigateTo(null)
+    }
+  }, [currentFolder, navigateTo])
 
-  const navigateTo = (path: string) => {
-    const nextHistory = history.slice(0, historyIndex + 1)
-    nextHistory.push(path)
-    setHistory(nextHistory)
-    setHistoryIndex(nextHistory.length - 1)
-    setSelectedFile(null)
-  }
+  const handleOpen = useCallback((entry: VfsEntry) => {
+    if (entry.type === 'folder') {
+      void navigateTo(entry.id)
+    } else if (entry.mimeType?.startsWith('text/')) {
+      // Open in notepad
+      const app = getApp('notepad')
+      if (app) {
+        openWindow({
+          id: `notepad-${entry.id}`,
+          title: `${entry.name} - Notepad`,
+          icon: app.icon,
+          component: app.component,
+          isMinimized: false,
+          isMaximized: false,
+          position: { x: 150 + Math.random() * 80, y: 100 + Math.random() * 40 },
+          size: app.defaultSize,
+          props: { fileId: entry.id },
+        })
+      }
+    }
+  }, [navigateTo, openWindow])
 
-  const canGoBack = historyIndex > 0
-  const canGoForward = historyIndex < history.length - 1
-  const pathParts = currentPath.split('\\')
-  const canGoUp = pathParts.length > 1
+  const handleNewFolder = useCallback(async () => {
+    try {
+      await createFolder('New Folder')
+    } catch {
+      // error state handled by store
+    }
+  }, [createFolder])
 
-  const handleBack = () => {
-    if (!canGoBack) {
+  const handleDelete = useCallback(async () => {
+    const ids = Array.from(selectedIds)
+    for (const id of ids) {
+      try {
+        await remove(id)
+      } catch {
+        break
+      }
+    }
+  }, [selectedIds, remove])
+
+  const startRename = useCallback((entry: VfsEntry) => {
+    setRenameId(entry.id)
+    setRenameValue(entry.name)
+  }, [])
+
+  const commitRename = useCallback(async () => {
+    if (!renameId || !renameValue.trim()) {
+      setRenameId(null)
       return
     }
-
-    setHistoryIndex(historyIndex - 1)
-    setSelectedFile(null)
-  }
-
-  const handleForward = () => {
-    if (!canGoForward) {
-      return
+    try {
+      await rename(renameId, renameValue.trim())
+    } catch {
+      // handled
     }
+    setRenameId(null)
+  }, [renameId, renameValue, rename])
 
-    setHistoryIndex(historyIndex + 1)
-    setSelectedFile(null)
-  }
+  const addressPath = breadcrumb.map((e) => e.name).join('\\') || 'C:'
 
-  const handleUp = () => {
-    if (!canGoUp) {
-      return
-    }
-
-    navigateTo(pathParts.slice(0, -1).join('\\'))
-  }
-
-  const handleOpenFile = (file: FileItem) => {
-    if (file.type === 'folder') {
-      navigateTo(`${currentPath}\\${file.name}`)
-    }
-  }
-  
   return (
     <div className="explorer-app">
       <div className="explorer-menubar">
@@ -106,91 +123,144 @@ export function ExplorerApp() {
         <span className="menu-item">View</span>
         <span className="menu-item">Help</span>
       </div>
-      
+
       <div className="explorer-toolbar">
-        <button className="win95-button small" onClick={handleBack} disabled={!canGoBack}>Back</button>
-        <button className="win95-button small" onClick={handleForward} disabled={!canGoForward}>Forward</button>
-        <button className="win95-button small" onClick={handleUp} disabled={!canGoUp}>Up</button>
+        <button
+          className="win95-button small"
+          onClick={() => void navigateUp()}
+          disabled={!currentFolder?.parentId}
+        >
+          Up
+        </button>
+        <button className="win95-button small" onClick={() => void refresh()}>
+          Refresh
+        </button>
         <div className="toolbar-divider" />
-        <button className="win95-button small" onClick={() => setViewMode('icons')}>Icons</button>
-        <button className="win95-button small" onClick={() => setViewMode('list')}>List</button>
-        <button className="win95-button small" onClick={() => setViewMode('details')}>Details</button>
+        <button className="win95-button small" onClick={() => setViewMode('icons')}>
+          Icons
+        </button>
+        <button className="win95-button small" onClick={() => setViewMode('list')}>
+          List
+        </button>
+        <div className="toolbar-divider" />
+        <button className="win95-button small" onClick={handleNewFolder}>
+          New Folder
+        </button>
+        <button
+          className="win95-button small"
+          onClick={handleDelete}
+          disabled={selectedIds.size === 0}
+        >
+          Delete
+        </button>
       </div>
-      
+
       <div className="explorer-addressbar">
         <span>Address</span>
         <input
           type="text"
-          value={currentPath}
-          onChange={(e) => {
-            const nextPath = e.target.value
-            if (fileSystem[nextPath]) {
-              navigateTo(nextPath)
-            }
-          }}
+          value={addressPath}
+          readOnly
           className="explorer-address-input"
+          aria-label="Current folder path"
         />
       </div>
-      
+
       <div className="explorer-content">
+        {/* Tree pane — breadcrumb items as clickable navigation */}
         <div className="explorer-tree">
-          <div className="tree-item">
-            <span className="tree-icon">📁</span>
-            <button className="tree-link" onClick={() => navigateTo('Desktop')}>Desktop</button>
-          </div>
-          <div className="tree-item">
-            <span className="tree-icon">📁</span>
-            <button className="tree-link" onClick={() => navigateTo('Desktop\\Notes')}>Notes</button>
-          </div>
-          <div className="tree-item">
-            <span className="tree-icon">💾</span>
-            <button className="tree-link" onClick={() => navigateTo('Desktop\\Media Library')}>Media Library</button>
-          </div>
+          {breadcrumb.map((folder) => (
+            <div key={folder.id} className="tree-item">
+              <span className="tree-icon">📁</span>
+              <button
+                className={`tree-link ${folder.id === currentFolder?.id ? 'active' : ''}`}
+                onClick={() => void navigateTo(folder.parentId)}
+              >
+                {folder.name}
+              </button>
+            </div>
+          ))}
         </div>
-        
+
+        {/* File pane */}
         <div className={`explorer-files ${viewMode}`}>
-          {viewMode === 'details' ? (
+          {isLoading && <div className="explorer-loading">Loading...</div>}
+          {error && <div className="explorer-error">{error}</div>}
+
+          {!isLoading && !error && viewMode === 'list' ? (
             <div className="files-details">
               <div className="details-header">
                 <span>Name</span>
                 <span>Size</span>
                 <span>Modified</span>
               </div>
-              {currentFiles.map(file => (
+              {entries.map((entry) => (
                 <div
-                  key={file.id}
-                  className={`details-row ${selectedFile === file.id ? 'selected' : ''}`}
-                  onClick={() => setSelectedFile(file.id)}
-                  onDoubleClick={() => handleOpenFile(file)}
+                  key={entry.id}
+                  className={`details-row ${selectedIds.has(entry.id) ? 'selected' : ''}`}
+                  onClick={(e) => select(entry.id, e.ctrlKey || e.metaKey)}
+                  onDoubleClick={() => handleOpen(entry)}
                 >
                   <span className="file-name">
-                    <img src={file.icon} alt="" />
-                    {file.name}
+                    <img src={iconForEntry(entry)} alt="" />
+                    {renameId === entry.id ? (
+                      <input
+                        className="rename-input"
+                        value={renameValue}
+                        onChange={(e) => setRenameValue(e.target.value)}
+                        onBlur={() => void commitRename()}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') void commitRename()
+                          if (e.key === 'Escape') setRenameId(null)
+                        }}
+                        autoFocus
+                      />
+                    ) : (
+                      <span onDoubleClick={(e) => { e.stopPropagation(); startRename(entry) }}>
+                        {entry.name}
+                      </span>
+                    )}
                   </span>
-                  <span>{file.size || '-'}</span>
-                  <span>{file.modified || '-'}</span>
+                  <span>{entry.type === 'file' ? formatSize(entry.size) : '-'}</span>
+                  <span>{new Date(entry.updatedAt).toLocaleDateString()}</span>
                 </div>
               ))}
             </div>
-          ) : (
-            currentFiles.map(file => (
-              <div
-                key={file.id}
-                className={`file-item ${selectedFile === file.id ? 'selected' : ''}`}
-                onClick={() => setSelectedFile(file.id)}
-                onDoubleClick={() => handleOpenFile(file)}
-              >
-                <img src={file.icon} alt="" className="file-icon" />
-                <span className="file-name">{file.name}</span>
-              </div>
-            ))
-          )}
+          ) : !isLoading && !error ? (
+            <div className="files-grid" onClick={() => clearSelection()}>
+              {entries.map((entry) => (
+                <div
+                  key={entry.id}
+                  className={`file-item ${selectedIds.has(entry.id) ? 'selected' : ''}`}
+                  onClick={(e) => { e.stopPropagation(); select(entry.id, e.ctrlKey || e.metaKey) }}
+                  onDoubleClick={() => handleOpen(entry)}
+                >
+                  <img src={iconForEntry(entry)} alt="" className="file-icon" />
+                  {renameId === entry.id ? (
+                    <input
+                      className="rename-input"
+                      value={renameValue}
+                      onChange={(e) => setRenameValue(e.target.value)}
+                      onBlur={() => void commitRename()}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') void commitRename()
+                        if (e.key === 'Escape') setRenameId(null)
+                      }}
+                      autoFocus
+                    />
+                  ) : (
+                    <span className="file-name">{entry.name}</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : null}
         </div>
       </div>
-      
+
       <div className="explorer-statusbar">
-        <span>{currentFiles.length} object(s)</span>
-        {selectedFile && <span>1 object(s) selected</span>}
+        <span>{entries.length} object(s)</span>
+        {selectedIds.size > 0 && <span>{selectedIds.size} object(s) selected</span>}
       </div>
     </div>
   )

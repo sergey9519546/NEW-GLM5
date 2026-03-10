@@ -1,0 +1,99 @@
+/*
+ * Windows 98 UI Font - MSW98UI
+ * 
+ * This file loads the authentic Windows 98 font (MSW98UI)
+ * and applies it as the default font throughout the application.
+ */
+
+/* Font sources in project root:
+ * - MSW98UI-Bold.otf (1.1MB) - Bold weight
+ * - MSW98UI-Bold.ttf (117KB) - Bold weight  
+ * - MSW98UI-Bold.woff (284KB) - Bold weight
+ * - MSW98UI-Regular.ttf (1.3KB) - Regular weight
+ * - MSW98UI-Regular.woff (13KB) - Regular weight
+ * - MSW98UI-Regular.woff2 (52KB) - Regular weight (best for web)
+ */
+
+/* Define custom properties for Windows 98 font */
+:root {
+  /* Font families in order of preference */
+  --font-w98: 'MSW98UI', 'Tahoma', 'Verdana', 'MS Sans Serif', 'Segoe UI', sans-serif;
+  --font-w98-mono: 'Consolas', 'Courier New', monospace;
+}
+
+/* Apply Windows 98 font globally */
+* {
+  font-family: var(--font-w98) !important;
+}
+
+/* Ensure headings also use the retro font */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-w98) !important;
+}
+
+/* Apply to common UI elements */
+body, 
+button, 
+input, 
+textarea, 
+select, 
+label, 
+span, 
+div, 
+p, 
+a {
+  font-family: var(--font-w98);
+}
+
+/* Windows 98 specific sizing */
+.window-title,
+.window-titlebar,
+.taskbar,
+.start-button,
+.start-menu,
+.desktop-icon-title,
+.context-menu,
+.win95-button,
+.win95-input,
+.system-clock,
+.menu-item-text {
+  font-size: 11px;
+  font-weight: normal;
+}
+
+/* Bold text for titles and emphasis */
+.window-titlebar,
+.start-button-text,
+.start-menu-sidebar-text {
+  font-weight: bold;
+}
+
+/* MSW98UI Font Notes:
+ * - The font is stored in multiple formats in the project root
+ * - Best format for web: .woff2 (smallest, best compression)
+ * - Next best: .woff
+ * - Fallback: .ttf
+ * - Original: .otf (largest, not recommended for web)
+ * 
+ * To use the font, you need to either:
+ * 1. Serve the font files from public/fonts/ directory
+ * 2. Use @font-face with proper src paths
+ * 
+ * Example @font-face (when fonts are in public/fonts/):
+ * 
+ * @font-face {
+ *   font-family: 'MSW98UI';
+ *   src: url('/fonts/MSW98UI-Regular.woff2') format('woff2'),
+ *        url('/fonts/MSW98UI-Regular.woff') format('woff');
+ *   font-weight: normal;
+ *   font-style: normal;
+ * }
+ * 
+ * @font-face {
+ *   font-family: 'MSW98UI';
+ *   src: url('/fonts/MSW98UI-Bold.woff2') format('woff2'),
+ *        url('/fonts/MSW98UI-Bold.woff') format('woff');
+ *   font-weight: bold;
+ *   font-style: normal;
+ * }
+ */

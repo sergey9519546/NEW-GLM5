@@ -1,0 +1,715 @@
+/* 
+ * Windows 98 UI Rebuild - Implementation Plan
+ * 
+ * This CSS file contains the complete implementation plan documented as comments.
+ * It can serve as a reference for building the Windows 98 UI.
+ * 
+ * ============================================
+ * PHASE 1: FONT INTEGRATION (CRITICAL)
+ * ============================================
+ * 
+ * ISSUE: MSW98UI font exists but NOT integrated
+ * - MSW98UI-Bold.otf in root folder (1.1MB)
+ * - Also available: MSW98UI-Regular.ttf, .woff, .woff2
+ * - Currently using Geist fonts (modern sans-serif) - WRONG
+ * 
+ * ACTIONS REQUIRED:
+ * 1. Move font to public/fonts/MSW98UI-Bold.otf
+ * 2. Create src/app/w98-font.css with @font-face
+ * 3. Import in src/app/layout.tsx
+ * 4. Update globals.css with --font-w98 variable
+ * 
+ * ============================================
+ * PHASE 2: CORE CSS MISSING (CRITICAL)
+ * ============================================
+ * 
+ * ISSUE: W95 components use classes that don't exist in any CSS file:
+ * - .window-frame
+ * - .window-titlebar  
+ * - .window-controls
+ * - .taskbar
+ * - .start-menu
+ * - .desktop-icon
+ * - .win95-button
+ * - .win95-input
+ * - And many more...
+ * 
+ * SOLUTION: Create complete Windows 98 styling below
+ * 
+ * ============================================
+ * WINDOWS 98 COLOR PALETTE
+ * ============================================
+ */
+
+:root {
+  /* Windows 98 Official Colors */
+  --w98-teal: #008080;
+  --w98-silver: #c0c0c0;
+  --w98-gray: #808080;
+  --w98-dark-gray: #404040;
+  --w98-white: #ffffff;
+  --w98-black: #000000;
+  --w98-navy: #000080;
+  --w98-blue: #0000ff;
+  --w98-red: #ff0000;
+  
+  /* Title Bar Gradients */
+  --w98-title-active-start: #082568;
+  --w98-title-active-end: #346AE9;
+  --w98-title-inactive: #c0c0c0;
+  
+  /* Button 3D Effects */
+  --w98-button-face: #c0c0c0;
+  --w98-button-highlight: #ffffff;
+  --w98-button-shadow: #808080;
+  --w98-button-dark-shadow: #000000;
+  
+  /* Selection */
+  --w98-selection: #000080;
+  --w98-selection-text: #ffffff;
+  
+  /* Text */
+  --w98-window-text: #000000;
+  --w98-disabled-text: #808080;
+  
+  /* Font */
+  --font-w98: 'MSW98UI', 'Tahoma', 'MS Sans Serif', sans-serif;
+}
+
+/* 
+ * ============================================
+ * DESKTOP
+ * ============================================
+ */
+
+.desktop {
+  position: fixed;
+  inset: 0;
+  background: var(--w98-teal);
+  /* Support wallpaper */
+  background-image: url('/wallpaper.bmp');
+  background-size: cover;
+  overflow: hidden;
+  font-family: var(--font-w98);
+}
+
+/* 
+ * ============================================
+ * DESKTOP ICONS
+ * ============================================
+ */
+
+.desktop-icon {
+  position: absolute;
+  width: 72px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  padding: 2px;
+}
+
+.desktop-icon-image img {
+  width: 32px;
+  height: 32px;
+  image-rendering: pixelated;
+}
+
+.desktop-icon-title {
+  margin-top: 2px;
+  padding: 1px 2px;
+  font-size: 11px;
+  color: var(--w98-white);
+  text-shadow: 1px 1px var(--w98-black);
+  text-align: center;
+  word-break: break-word;
+  max-width: 70px;
+}
+
+.desktop-icon.selected {
+  background: var(--w98-selection);
+}
+
+.desktop-icon.selected .desktop-icon-title {
+  color: var(--w98-selection-text);
+}
+
+/* 
+ * ============================================
+ * WINDOW FRAME
+ * ============================================
+ */
+
+.window-frame {
+  position: absolute;
+  background: var(--w98-silver);
+  border: 2px solid;
+  border-top-color: var(--w98-white);
+  border-left-color: var(--w98-white);
+  border-right-color: var(--w98-dark-gray);
+  border-bottom-color: var(--w98-dark-gray);
+  box-shadow: 1px 1px 0 var(--w98-black);
+  display: flex;
+  flex-direction: column;
+}
+
+.window-titlebar {
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2px;
+  font-size: 11px;
+  font-weight: bold;
+  user-select: none;
+}
+
+.window-titlebar.active {
+  background: linear-gradient(90deg, var(--w98-title-active-start), var(--w98-title-active-end));
+  color: var(--w98-white);
+}
+
+.window-titlebar.inactive {
+  background: var(--w98-title-inactive);
+  color: var(--w98-disabled-text);
+}
+
+.window-title {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding-left: 2px;
+}
+
+.window-title-icon {
+  width: 14px;
+  height: 14px;
+}
+
+.window-controls {
+  display: flex;
+  gap: 1px;
+}
+
+.window-btn {
+  width: 16px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: bold;
+  background: var(--w98-silver);
+  border: 1px solid;
+  border-top-color: var(--w98-white);
+  border-left-color: var(--w98-white);
+  border-right-color: var(--w98-dark-gray);
+  border-bottom-color: var(--w98-dark-gray);
+  cursor: pointer;
+}
+
+.window-btn:active {
+  border-top-color: var(--w98-dark-gray);
+  border-left-color: var(--w98-dark-gray);
+  border-right-color: var(--w98-white);
+  border-bottom-color: var(--w98-white);
+}
+
+.window-btn.close:hover {
+  background: var(--w98-red);
+  color: var(--w98-white);
+}
+
+.window-content {
+  flex: 1;
+  background: var(--w98-white);
+  overflow: auto;
+}
+
+.window-resize-handle {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 16px;
+  height: 16px;
+  cursor: nwse-resize;
+}
+
+/* 
+ * ============================================
+ * TASKBAR
+ * ============================================
+ */
+
+.taskbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 28px;
+  background: var(--w98-silver);
+  border-top: 2px solid var(--w98-white);
+  display: flex;
+  align-items: center;
+  padding: 0;
+  font-family: var(--font-w98);
+  font-size: 11px;
+  z-index: 9999;
+}
+
+.taskbar-inner {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+}
+
+.start-button {
+  height: 22px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 6px;
+  margin: 2px;
+  background: var(--w98-silver);
+  border: 1px solid;
+  border-top-color: var(--w98-white);
+  border-left-color: var(--w98-white);
+  border-right-color: var(--w98-dark-gray);
+  border-bottom-color: var(--w98-dark-gray);
+  font-family: var(--font-w98);
+  font-size: 11px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.start-button:hover,
+.start-button.active {
+  background: var(--w98-white);
+}
+
+.start-button-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.start-button-text {
+  margin-top: -1px;
+}
+
+.quick-launch {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: 4px;
+}
+
+.quick-launch-divider {
+  width: 2px;
+  height: 20px;
+  border-left: 1px solid var(--w98-gray);
+  border-right: 1px solid var(--w98-white);
+  margin: 0 2px;
+}
+
+.quick-launch-btn {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.quick-launch-btn:hover {
+  background: var(--w98-navy);
+}
+
+.quick-launch-btn img {
+  width: 16px;
+  height: 16px;
+}
+
+.taskbar-apps {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 4px;
+}
+
+.taskbar-app {
+  height: 22px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 8px;
+  background: var(--w98-silver);
+  border: 1px solid;
+  border-color: transparent;
+  font-family: var(--font-w98);
+  font-size: 11px;
+  cursor: pointer;
+  max-width: 150px;
+}
+
+.taskbar-app:hover {
+  background: var(--w98-white);
+  border-color: var(--w98-white);
+}
+
+.taskbar-app.active {
+  background: var(--w98-white);
+  border: 1px inset;
+  border-color: var(--w98-gray);
+}
+
+.taskbar-app-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.taskbar-app-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.system-tray {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 6px;
+  height: 100%;
+  border-left: 1px solid var(--w98-gray);
+}
+
+.system-tray-icons {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tray-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.system-clock {
+  font-size: 11px;
+  padding: 2px 6px;
+  background: var(--w98-button-face);
+  border: 1px inset;
+  border-color: var(--w98-gray) var(--w98-white) var(--w98-white) var(--w98-gray);
+}
+
+/* 
+ * ============================================
+ * START MENU
+ * ============================================
+ */
+
+.start-menu-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+}
+
+.start-menu {
+  position: fixed;
+  bottom: 28px;
+  left: 0;
+  width: 200px;
+  display: flex;
+  background: var(--w98-silver);
+  border: 2px solid;
+  border-color: var(--w98-white) var(--w98-dark-gray) var(--w98-dark-gray) var(--w98-white);
+  box-shadow: 2px 2px 0 var(--w98-black);
+}
+
+.start-menu-sidebar {
+  width: 24px;
+  background: linear-gradient(180deg, #000080, #1084d0);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 4px;
+}
+
+.start-menu-sidebar-text {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);
+  color: var(--w98-white);
+  font-weight: bold;
+  font-size: 18px;
+  letter-spacing: 2px;
+}
+
+.start-menu-content {
+  flex: 1;
+}
+
+.start-menu-items {
+  padding: 2px;
+}
+
+.start-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 11px;
+}
+
+.start-menu-item:hover {
+  background: var(--w98-navy);
+  color: var(--w98-white);
+}
+
+.menu-item-icon {
+  width: 32px;
+  height: 32px;
+}
+
+.menu-item-arrow {
+  margin-left: auto;
+  font-size: 9px;
+}
+
+.start-menu-divider {
+  height: 1px;
+  margin: 4px 2px;
+  border-top: 1px solid var(--w98-gray);
+  border-bottom: 1px solid var(--w98-white);
+}
+
+.start-menu-footer {
+  border-top: 1px solid var(--w98-gray);
+  padding: 2px;
+}
+
+.start-menu-item.logout {
+  font-weight: bold;
+}
+
+/* 
+ * ============================================
+ * CONTEXT MENU
+ * ============================================
+ */
+
+.context-menu {
+  position: fixed;
+  min-width: 120px;
+  background: var(--w98-silver);
+  border: 2px solid;
+  border-color: var(--w98-white) var(--w98-dark-gray) var(--w98-dark-gray) var(--w98-white);
+  box-shadow: 2px 2px 0 var(--w98-black);
+  z-index: 10001;
+  font-family: var(--font-w98);
+  font-size: 11px;
+  padding: 2px 0;
+}
+
+.context-menu-item {
+  padding: 4px 24px;
+  cursor: pointer;
+}
+
+.context-menu-item:hover {
+  background: var(--w98-navy);
+  color: var(--w98-white);
+}
+
+.context-menu-divider {
+  height: 1px;
+  margin: 4px 2px;
+  border-top: 1px solid var(--w98-gray);
+  border-bottom: 1px solid var(--w98-white);
+}
+
+/* 
+ * ============================================
+ * BOOT SCREEN
+ * ============================================
+ */
+
+.boot-screen {
+  position: fixed;
+  inset: 0;
+  background: var(--w98-black);
+  color: var(--w98-white);
+  font-family: var(--font-w98);
+  font-size: 11px;
+  display: flex;
+  flex-direction: column;
+}
+
+.bios-container {
+  padding: 20px;
+  font-family: monospace;
+  font-size: 12px;
+}
+
+.bios-line {
+  margin-bottom: 2px;
+}
+
+.bios-progress {
+  margin-top: 10px;
+  width: 200px;
+  height: 20px;
+  border: 1px solid var(--w98-white);
+}
+
+.bios-progress-bar {
+  height: 100%;
+  background: var(--w98-white);
+}
+
+.splash-screen {
+  background: var(--w98-navy);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.splash-content {
+  text-align: center;
+  color: var(--w98-white);
+}
+
+.splash-logo {
+  margin-bottom: 20px;
+}
+
+.splash-icon {
+  width: 64px;
+  height: 64px;
+}
+
+.splash-title {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.splash-subtitle {
+  font-size: 14px;
+  margin-top: 10px;
+}
+
+.splash-loading {
+  margin-top: 30px;
+}
+
+/* 
+ * ============================================
+ * UI CONTROLS - BUTTONS & INPUTS
+ * ============================================
+ */
+
+.win95-button {
+  min-width: 60px;
+  padding: 4px 12px;
+  margin: 2px;
+  background: var(--w98-silver);
+  border: 2px solid;
+  border-top-color: var(--w98-white);
+  border-left-color: var(--w98-white);
+  border-right-color: var(--w98-dark-gray);
+  border-bottom-color: var(--w98-dark-gray);
+  font-family: var(--font-w98);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.win95-button:hover {
+  background: var(--w98-white);
+}
+
+.win95-button:active {
+  border-top-color: var(--w98-dark-gray);
+  border-left-color: var(--w98-dark-gray);
+  border-right-color: var(--w98-white);
+  border-bottom-color: var(--w98-white);
+}
+
+.win95-button:disabled {
+  color: var(--w98-disabled-text);
+  cursor: not-allowed;
+}
+
+.win95-button.small {
+  min-width: 40px;
+  padding: 2px 8px;
+  font-size: 10px;
+}
+
+.win95-input {
+  padding: 2px 4px;
+  border: 2px solid;
+  border-top-color: var(--w98-dark-gray);
+  border-left-color: var(--w98-dark-gray);
+  border-right-color: var(--w98-white);
+  border-bottom-color: var(--w98-white);
+  font-family: var(--font-w98);
+  font-size: 11px;
+  background: var(--w98-white);
+}
+
+.win95-input:focus {
+  outline: 1px dotted var(--w98-black);
+}
+
+.win95-textarea {
+  padding: 2px 4px;
+  border: 2px solid;
+  border-top-color: var(--w98-dark-gray);
+  border-left-color: var(--w98-dark-gray);
+  border-right-color: var(--w98-white);
+  border-bottom-color: var(--w98-white);
+  font-family: var(--font-w98);
+  font-size: 11px;
+  background: var(--w98-white);
+  resize: none;
+}
+
+/* 
+ * ============================================
+ * IMPLEMENTATION CHECKLIST
+ * ============================================
+ * 
+ * [ ] Desktop background is teal (#008080)
+ * [ ] Desktop icons display correctly with white text and shadow
+ * [ ] Windows have proper 3D beveled borders
+ * [ ] Active windows have blue gradient title bar (#082568 to #346AE9)
+ * [ ] Inactive windows have gray title bar (#c0c0c0)
+ * [ ] Taskbar is 28px and positioned at bottom
+ * [ ] Start menu has blue gradient sidebar
+ * [ ] All text uses MSW98UI font
+ * [ ] Buttons have proper 3D press effect
+ * [ ] Input fields have proper inset borders
+ * 
+ * ============================================
+ * FILES TO MODIFY
+ * ============================================
+ * 
+ * 1. MSW98UI-Bold.otf -> Move to public/fonts/
+ * 2. src/app/layout.tsx -> Add font import
+ * 3. src/app/globals.css -> Add --font-w98 variable
+ * 4. Create src/app/w98-font.css -> @font-face definitions
+ * 5. Components should work with new CSS (minimal changes)
+ * 
+ * ============================================
+ * REFERENCES
+ * ============================================
+ * 
+ * https://guidebookgallery.org/screenshots/win98se
+ * https://windows98-ui.netlify.app/#components
+ * https://jdan.github.io/98.css/
+ * https://win98icons.alexmeub.com/
+ */
