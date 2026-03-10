@@ -1,42 +1,28 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useWindowStore, useSystemStore } from '@/store'
 import { W98_ICONS } from '@/lib/icons'
 import { StartMenu } from './StartMenu'
+import { SystemTray } from './SystemTray'
 
 export function Taskbar() {
   const { windows, activeWindowId, focusWindow, minimizeWindow } = useWindowStore()
   const { bootPhase } = useSystemStore()
   const [showStartMenu, setShowStartMenu] = useState(false)
-  const [currentTime, setCurrentTime] = useState(new Date())
-  
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentTime(new Date())
-    }, 1000)
-    
-    return () => clearInterval(interval)
-  }, [])
-  
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true,
-    })
-  }
   
   if (bootPhase !== 'desktop') return null
   
   return (
     <>
-      <div className="taskbar">
+      <div className="taskbar" role="toolbar" aria-label="Taskbar">
         <div className="taskbar-inner">
           {/* Start Button */}
           <button 
             className={`start-button ${showStartMenu ? 'active' : ''}`}
             onClick={() => setShowStartMenu(!showStartMenu)}
+            aria-expanded={showStartMenu}
+            aria-haspopup="true"
           >
             <img src={W98_ICONS.windows} alt="" className="start-button-icon" />
             <span className="start-button-text">Start</span>
@@ -79,14 +65,7 @@ export function Taskbar() {
           </div>
           
           {/* System Tray */}
-          <div className="system-tray">
-            <div className="system-tray-icons">
-              <img src={W98_ICONS.volume} alt="Volume" className="tray-icon" />
-            </div>
-            <div className="system-clock">
-              {formatTime(currentTime)}
-            </div>
-          </div>
+          <SystemTray />
         </div>
       </div>
       

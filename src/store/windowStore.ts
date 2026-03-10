@@ -123,16 +123,28 @@ export const useWindowStore = create<WindowsState>()((set, get) => ({
   maximizeWindow: (id) => {
     set(state => ({
       windows: state.windows.map(w =>
-        w.id === id ? { ...w, isMaximized: true } : w
+        w.id === id ? {
+          ...w,
+          isMaximized: true,
+          preMaxBounds: { x: w.position.x, y: w.position.y, width: w.size.width, height: w.size.height },
+        } : w
       ),
     }))
   },
       
   restoreWindow: (id) => {
     set(state => ({
-      windows: state.windows.map(w =>
-        w.id === id ? { ...w, isMaximized: false, isMinimized: false } : w
-      ),
+      windows: state.windows.map(w => {
+        if (w.id !== id) return w
+        const bounds = w.preMaxBounds
+        return {
+          ...w,
+          isMaximized: false,
+          isMinimized: false,
+          ...(bounds ? { position: { x: bounds.x, y: bounds.y }, size: { width: bounds.width, height: bounds.height } } : {}),
+          preMaxBounds: null,
+        }
+      }),
       activeWindowId: id,
     }))
   },

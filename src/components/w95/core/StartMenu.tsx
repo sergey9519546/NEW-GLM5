@@ -2,51 +2,30 @@
 
 import { useWindowStore } from '@/store'
 import { W98_ICONS } from '@/lib/icons'
+import { getStartMenuApps, type AppDefinition } from '@/lib/appRegistry'
 
 interface StartMenuProps {
   onClose: () => void
 }
 
+const START_MENU_APPS = getStartMenuApps()
+
 export function StartMenu({ onClose }: StartMenuProps) {
   const { openWindow } = useWindowStore()
   
-  const handleOpenApp = (component: string, title: string, icon: string) => {
+  const handleOpenApp = (app: AppDefinition) => {
     openWindow({
-      id: component,
-      title,
-      icon,
-      component,
+      id: app.id,
+      title: app.title,
+      icon: app.icon,
+      component: app.component,
       isMinimized: false,
       isMaximized: false,
       position: { x: 100 + Math.random() * 100, y: 100 + Math.random() * 50 },
-      size: { width: 600, height: 400 },
+      size: app.defaultSize,
     })
     onClose()
   }
-  
-  const menuItems = [
-    {
-      id: 'programs',
-      name: 'Programs',
-      icon: W98_ICONS.folder,
-      submenu: [
-        { id: 'music', name: 'Music Player', icon: W98_ICONS.mediaPlayer },
-        { id: 'photos', name: 'Photos', icon: W98_ICONS.folder },
-        { id: 'videos', name: 'Videos', icon: W98_ICONS.mediaPlayer },
-        { id: 'games', name: 'Games', icon: W98_ICONS.folder },
-      ],
-    },
-    {
-      id: 'documents',
-      name: 'Documents',
-      icon: W98_ICONS.document,
-    },
-    {
-      id: 'settings',
-      name: 'Settings',
-      icon: W98_ICONS.computer,
-    },
-  ]
   
   return (
     <div className="start-menu-overlay" onClick={onClose}>
@@ -59,51 +38,19 @@ export function StartMenu({ onClose }: StartMenuProps) {
         </div>
         <div className="start-menu-content">
           <div className="start-menu-items">
-            <div className="start-menu-item" onClick={() => handleOpenApp('music', 'Music', W98_ICONS.mediaPlayer)}>
-              <img src={W98_ICONS.mediaPlayer} alt="" className="menu-item-icon" />
-              <span className="menu-item-text">Music</span>
-              <span className="menu-item-arrow">▶</span>
-            </div>
-            <div className="start-menu-item" onClick={() => handleOpenApp('photos', 'Photos', W98_ICONS.folder)}>
-              <img src={W98_ICONS.folder} alt="" className="menu-item-icon" />
-              <span className="menu-item-text">Photos</span>
-              <span className="menu-item-arrow">▶</span>
-            </div>
-            <div className="start-menu-item" onClick={() => handleOpenApp('videos', 'Videos', W98_ICONS.mediaPlayer)}>
-              <img src={W98_ICONS.mediaPlayer} alt="" className="menu-item-icon" />
-              <span className="menu-item-text">Videos</span>
-              <span className="menu-item-arrow">▶</span>
-            </div>
-            <div className="start-menu-item" onClick={() => handleOpenApp('news', 'News', W98_ICONS.document)}>
-              <img src={W98_ICONS.document} alt="" className="menu-item-icon" />
-              <span className="menu-item-text">News</span>
-            </div>
-            <div className="start-menu-divider" />
-            <div className="start-menu-item" onClick={() => handleOpenApp('notepad', 'Notepad', W98_ICONS.notepad)}>
-              <img src={W98_ICONS.notepad} alt="" className="menu-item-icon" />
-              <span className="menu-item-text">Notepad</span>
-            </div>
-            <div className="start-menu-item" onClick={() => handleOpenApp('calculator', 'Calculator', W98_ICONS.calculator)}>
-              <img src={W98_ICONS.calculator} alt="" className="menu-item-icon" />
-              <span className="menu-item-text">Calculator</span>
-            </div>
-            <div className="start-menu-item" onClick={() => handleOpenApp('paint', 'Paint', W98_ICONS.paint)}>
-              <img src={W98_ICONS.paint} alt="" className="menu-item-icon" />
-              <span className="menu-item-text">Paint</span>
-            </div>
-            <div className="start-menu-divider" />
-            <div className="start-menu-item" onClick={() => handleOpenApp('explorer', 'My Computer', W98_ICONS.computer)}>
-              <img src={W98_ICONS.computer} alt="" className="menu-item-icon" />
-              <span className="menu-item-text">My Computer</span>
-            </div>
-            <div className="start-menu-item" onClick={() => handleOpenApp('minesweeper', 'Minesweeper', W98_ICONS.folder)}>
-              <img src={W98_ICONS.folder} alt="" className="menu-item-icon" />
-              <span className="menu-item-text">Minesweeper</span>
-            </div>
-            <div className="start-menu-item" onClick={() => handleOpenApp('snake', 'Snake', W98_ICONS.folder)}>
-              <img src={W98_ICONS.folder} alt="" className="menu-item-icon" />
-              <span className="menu-item-text">Snake</span>
-            </div>
+            {START_MENU_APPS.map((app, i) => {
+              const prevCategory = i > 0 ? START_MENU_APPS[i - 1].category : null
+              const showDivider = prevCategory !== null && prevCategory !== app.category
+              return (
+                <div key={app.id}>
+                  {showDivider && <div className="start-menu-divider" />}
+                  <div className="start-menu-item" onClick={() => handleOpenApp(app)}>
+                    <img src={app.icon} alt="" className="menu-item-icon" />
+                    <span className="menu-item-text">{app.title}</span>
+                  </div>
+                </div>
+              )
+            })}
           </div>
           <div className="start-menu-footer">
             <div className="start-menu-item logout" onClick={() => window.location.reload()}>

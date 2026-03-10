@@ -1,5 +1,4 @@
 import { create } from 'zustand'
-import { persist, createJSONStorage } from 'zustand/middleware'
 import {
   DEFAULT_DESKTOP_CONTENT,
   cloneDesktopContent,
@@ -55,40 +54,13 @@ interface AdminBiosState {
   clearError: () => void
 }
 
-type PersistedState = Omit<
-  AdminBiosState,
-  | 'setBandName'
-  | 'setBandBio'
-  | 'addTrack'
-  | 'updateTrack'
-  | 'removeTrack'
-  | 'addPhoto'
-  | 'updatePhoto'
-  | 'removePhoto'
-  | 'addVideo'
-  | 'updateVideo'
-  | 'removeVideo'
-  | 'addNews'
-  | 'updateNews'
-  | 'removeNews'
-  | 'addWallpaper'
-  | 'updateWallpaper'
-  | 'removeWallpaper'
-  | 'saveNote'
-  | 'deleteNote'
-  | 'hydrate'
-  | 'saveContent'
-  | 'resetToDefaults'
-  | 'clearError'
->
-
-const initialState: PersistedState = {
+const initialState = {
   ...cloneDesktopContent(DEFAULT_DESKTOP_CONTENT),
   hasLoaded: false,
   isHydrating: false,
   isSaving: false,
   error: null,
-}
+} satisfies Partial<AdminBiosState>
 
 function snapshotFromState(state: AdminBiosState): DesktopContentSnapshot {
   return {
@@ -104,8 +76,7 @@ function snapshotFromState(state: AdminBiosState): DesktopContentSnapshot {
 }
 
 export const useAdminBiosStore = create<AdminBiosState>()(
-  persist(
-    (set, get) => ({
+  (set, get) => ({
       ...initialState,
       setBandName: (bandName) => set({ bandName }),
       setBandBio: (bandBio) => set({ bandBio }),
@@ -230,13 +201,7 @@ export const useAdminBiosStore = create<AdminBiosState>()(
       },
 
       clearError: () => set({ error: null }),
-    }),
-    {
-      name: 'w98-admin-bios',
-      storage: createJSONStorage(() => localStorage),
-      partialize: (state) => snapshotFromState(state),
-    }
-  )
+    })
 )
 
 export type {
