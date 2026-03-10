@@ -15,6 +15,7 @@ import {
   resetDesktopContent as resetDesktopContentRequest,
   saveDesktopContent,
 } from '@services/desktop-content'
+import { useSystemStore } from './systemStore'
 
 interface AdminBiosState {
   bandName: string
@@ -171,10 +172,11 @@ export const useAdminBiosStore = create<AdminBiosState>()(
 
       saveContent: async () => {
         const snapshot = cloneDesktopContent(snapshotFromState(get()))
+        const adminToken = useSystemStore.getState().adminToken
         set({ isSaving: true, error: null })
 
         try {
-          const content = await saveDesktopContent(snapshot)
+          const content = await saveDesktopContent(snapshot, adminToken ?? undefined)
           set({ ...content, hasLoaded: true, isSaving: false, error: null })
           return true
         } catch (error) {
@@ -187,10 +189,11 @@ export const useAdminBiosStore = create<AdminBiosState>()(
       },
 
       resetToDefaults: async () => {
+        const adminToken = useSystemStore.getState().adminToken
         set({ isSaving: true, error: null })
 
         try {
-          const content = await resetDesktopContentRequest()
+          const content = await resetDesktopContentRequest(adminToken ?? undefined)
           set({ ...content, hasLoaded: true, isSaving: false, error: null })
         } catch (error) {
           set({

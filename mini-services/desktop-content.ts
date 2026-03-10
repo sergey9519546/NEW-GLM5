@@ -3,6 +3,13 @@ import {
   type DesktopContentSnapshot,
 } from '@/lib/desktop-content'
 
+function createAdminHeaders(adminToken?: string) {
+  return {
+    'Content-Type': 'application/json',
+    ...(adminToken ? { 'X-Admin-Token': adminToken } : {}),
+  }
+}
+
 async function parseResponse(response: Response) {
   if (!response.ok) {
     const payload = await response.json().catch(() => ({}))
@@ -20,21 +27,21 @@ export async function fetchDesktopContent(): Promise<DesktopContentSnapshot> {
 
 export async function saveDesktopContent(
   content: DesktopContentSnapshot,
+  adminToken?: string,
 ): Promise<DesktopContentSnapshot> {
   const response = await fetch('/api/desktop-content', {
     method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: createAdminHeaders(adminToken),
     body: JSON.stringify(content),
   })
 
   return parseResponse(response)
 }
 
-export async function resetDesktopContent(): Promise<DesktopContentSnapshot> {
+export async function resetDesktopContent(adminToken?: string): Promise<DesktopContentSnapshot> {
   const response = await fetch('/api/desktop-content', {
     method: 'POST',
+    headers: adminToken ? { 'X-Admin-Token': adminToken } : undefined,
   })
 
   return parseResponse(response)

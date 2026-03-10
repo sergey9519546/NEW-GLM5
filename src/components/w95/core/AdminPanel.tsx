@@ -22,7 +22,7 @@ interface Show {
 }
 
 export function AdminPanel() {
-  const { adminUnlocked, setAdminUnlocked } = useSystemStore()
+  const { adminUnlocked, adminToken, setAdminSession, clearAdminSession } = useSystemStore()
   const {
     bandName,
     bandBio,
@@ -70,7 +70,11 @@ export function AdminPanel() {
         const data = await res.json()
         setShows(data.shows ?? [])
       }
-    } catch { /* ignore */ } finally { setShowsLoading(false) }
+    } catch {
+      /* ignore */
+    } finally {
+      setShowsLoading(false)
+    }
   }, [])
 
   useEffect(() => {
@@ -81,7 +85,10 @@ export function AdminPanel() {
     try {
       const res = await fetch('/api/shows', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(adminToken ? { 'X-Admin-Token': adminToken } : {}),
+        },
         body: JSON.stringify({
           title: 'New Show',
           venue: 'TBD',
@@ -89,15 +96,32 @@ export function AdminPanel() {
           status: 'upcoming',
         }),
       })
-      if (res.ok) void fetchShows()
-    } catch { /* ignore */ }
+      if (res.ok) {
+        void fetchShows()
+      } else if (res.status === 401) {
+        setLoginError('Admin session expired')
+        clearAdminSession()
+      }
+    } catch {
+      /* ignore */
+    }
   }
 
   const deleteShow = async (id: string) => {
     try {
-      await fetch(`/api/shows/${id}`, { method: 'DELETE' })
-      setShows(prev => prev.filter(s => s.id !== id))
-    } catch { /* ignore */ }
+      const res = await fetch(`/api/shows/${id}`, {
+        method: 'DELETE',
+        headers: adminToken ? { 'X-Admin-Token': adminToken } : undefined,
+      })
+      if (res.ok) {
+        setShows(prev => prev.filter(s => s.id !== id))
+      } else if (res.status === 401) {
+        setLoginError('Admin session expired')
+        clearAdminSession()
+      }
+    } catch {
+      /* ignore */
+    }
   }
 
   const handleLogin = async () => {
@@ -110,7 +134,8 @@ export function AdminPanel() {
         body: JSON.stringify({ passphrase: password }),
       })
       if (res.ok) {
-        setAdminUnlocked(true)
+        const data = await res.json()
+        setAdminSession(data.token)
         setPassword('')
       } else {
         setLoginError('Invalid password')
@@ -143,7 +168,6 @@ export function AdminPanel() {
             <button className="win95-button" onClick={() => setPassword('')}>Cancel</button>
           </div>
           {loginError && <p className="admin-hint" style={{ color: 'var(--w98-red, red)' }}>{loginError}</p>}
-          <p className="admin-hint">Hint: altitune</p>
         </div>
       </div>
     )
@@ -225,7 +249,7 @@ export function AdminPanel() {
               <button className="win95-button" onClick={resetToDefaults}>
                 Reset to Defaults
               </button>
-              <button className="win95-button" onClick={() => setAdminUnlocked(false)}>
+              <button className="win95-button" onClick={clearAdminSession}>
                 Logout
               </button>
             </div>
