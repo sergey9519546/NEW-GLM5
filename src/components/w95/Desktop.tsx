@@ -18,6 +18,10 @@ import {
   ExplorerApp,
   MinesweeperApp,
   SnakeApp,
+  FanChatApp,
+  AIChatApp,
+  WaybackApp,
+  BrowserApp,
 } from './apps'
 
 const DESKTOP_ICONS = getDesktopApps()
@@ -35,6 +39,10 @@ const APP_COMPONENTS: Record<string, React.ComponentType> = {
   minesweeper: MinesweeperApp,
   snake: SnakeApp,
   admin: AdminPanel,
+  fanchat: FanChatApp,
+  aichat: AIChatApp,
+  wayback: WaybackApp,
+  browser: BrowserApp,
 }
 
 export function Desktop() {
