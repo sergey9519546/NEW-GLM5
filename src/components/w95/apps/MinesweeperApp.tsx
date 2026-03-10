@@ -79,7 +79,7 @@ export function MinesweeperApp() {
     return () => clearInterval(interval)
   }, [isPlaying, gameOver, gameWon])
   
-  const revealCell = useCallback((index: number, currentBoard: Cell[]): Cell[] => {
+  const revealCell = useCallback(function reveal(index: number, currentBoard: Cell[]): Cell[] {
     const cell = currentBoard[index]
     if (cell.state !== 'hidden') return currentBoard
     
@@ -89,7 +89,7 @@ export function MinesweeperApp() {
     if (cell.value === 0) {
       const neighbors = getNeighbors(index)
       neighbors.forEach(n => {
-        revealCell(n, newBoard)
+        reveal(n, newBoard)
       })
     }
     

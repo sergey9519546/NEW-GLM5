@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useCallback, useEffect, useRef, type ReactElement } from 'react'
 
 const GRID_SIZE = 20
 const CELL_SIZE = 15
@@ -118,7 +118,7 @@ export function SnakeApp() {
   }, [isPlaying, gameOver, food, generateFood, score])
   
   const renderGrid = () => {
-    const cells = []
+    const cells: ReactElement[] = []
     for (let y = 0; y < GRID_SIZE; y++) {
       for (let x = 0; x < GRID_SIZE; x++) {
         const isSnake = snake.some(s => s.x === x && s.y === y)
