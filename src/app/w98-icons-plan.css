@@ -1,0 +1,224 @@
+/*
+ * Windows 98 Icons - Implementation Plan
+ * 
+ * Source: https://windows98-ui.netlify.app/#icons
+ * 
+ * This document outlines the plan to replace current small icons (32x32)
+ * with larger, more detailed Windows 98 icons.
+ * 
+ * ============================================
+ * CURRENT STATE
+ * ============================================
+ * 
+ * Current icons location: public/icons/w98/
+ * Current size: 32x32 pixels
+ * Current source: win98icons.alexmeub.com
+ * 
+ * Current files:
+ * - calculator.png
+ * - computer.png  
+ * - desktop.png
+ * - document.png
+ * - folder.png
+ * - ie.png
+ * - mail.png
+ * - media_player.png
+ * - notepad_file.png
+ * - notepad.png
+ * - paint.png
+ * - volume.png
+ * - windows.png
+ * 
+ * ============================================
+ * REFERENCE ICONS FROM windows98-ui.netlify.app
+ * ============================================
+ * 
+ * The windows98-ui.netlify.app provides larger, more detailed icons.
+ * These are typically 48x48 or larger with more detail.
+ * 
+ * Icon categories available:
+ * - System Icons (My Computer, Recycle Bin, Network)
+ * - Applications (Notepad, Paint, Calculator, etc.)
+ * - File Types (Documents, Folders, Images)
+ * - Control Panel items
+ * - Internet icons
+ * 
+ * ============================================
+ * IMPLEMENTATION STEPS
+ * ============================================
+ * 
+ * STEP 1: Download LARGER icons from windows98-ui.netlify.app
+ * -----------------------------
+ * Visit: https://windows98-ui.netlify.app/#icons
+ * Download the following icons in larger sizes (48x48 or 64x64):
+ * 
+ * Required icon list for desktop apps:
+ * 
+ * | App | Current Icon | Suggested New Name | Size |
+ * |-----|--------------|-------------------|------|
+ * | My Computer | computer.png | my-computer.png | 48x48 |
+ * | Music | media_player.png | winamp.png | 48x48 |
+ * | Photos | folder.png | photos.png | 48x48 |
+ * | Videos | media_player.png | videos.png | 48x48 |
+ * | News | document.png | news.png | 48x48 |
+ * | Notepad | notepad.png | notepad.png | 48x48 |
+ * | Calculator | calculator.png | calculator.png | 48x48 |
+ * | Paint | paint.png | paint.png | 48x48 |
+ * | Minesweeper | external | minesweeper.png | 48x48 |
+ * | Snake | external | snake.png | 48x48 |
+ * 
+ * Taskbar icons:
+ * | Component | Current | Suggested | Size |
+ * |-----------|---------|-----------|------|
+ * | Start Button | windows.png | windows-start.png | 48x48 |
+ * | Quick Launch IE | ie.png | ie-explorer.png | 48x48 |
+ * | Show Desktop | desktop.png | desktop-show.png | 48x48 |
+ * | Outlook Express | mail.png | outlook.png | 48x48 |
+ * | Volume | volume.png | speaker.png | 48x48 |
+ * 
+ * STEP 2: Organize files
+ * ----------------------
+ * Move new icons to: public/icons/w98/large/
+ * 
+ * STEP 3: Update icon mappings
+ * ----------------------------
+ * Update src/lib/icons.ts to point to new larger icons:
+ * 
+ * export const W98_ICONS = {
+ *   // Use larger versions
+ *   windows: `${W98_ICON_BASE}/large/windows-start.png`,
+ *   ie: `${W98_ICON_BASE}/large/ie-explorer.png`,
+ *   desktop: `${W98_ICON_BASE}/large/desktop-show.png`,
+ *   mail: `${W98_ICON_BASE}/large/outlook.png`,
+ *   volume: `${W98_ICON_BASE}/large/speaker.png`,
+ *   computer: `${W98_ICON_BASE}/large/my-computer.png`,
+ *   notepad: `${W98_ICON_BASE}/large/notepad.png`,
+ *   notepadFile: `${W98_ICON_BASE}/large/document-text.png`,
+ *   paint: `${W98_ICON_BASE}/large/paint.png`,
+ *   mediaPlayer: `${W98_ICON_BASE}/large/winamp.png`,
+ *   document: `${W98_ICON_BASE}/large/document.png`,
+ *   folder: `${W98_ICON_BASE}/large/folder-open.png`,
+ *   calculator: `${W98_ICON_BASE}/large/calculator.png`,
+ * } as const
+ * 
+ * STEP 4: Update CSS for larger icons
+ * -----------------------------------
+ * Add to src/app/w98-core.css:
+ * 
+ * .desktop-icon-image img {
+ *   width: 48px;  // Increased from 32px
+ *   height: 48px; // Increased from 32px
+ *   image-rendering: pixelated;
+ * }
+ * 
+ * .start-button-icon {
+ *   width: 24px;  // Increased from 16px
+ *   height: 24px; // Increased from 16px
+ * }
+ * 
+ * .taskbar-app-icon {
+ *   width: 20px;  // Increased from 16px
+ *   height: 20px; // Increased from 16px
+ * }
+ * 
+ * .tray-icon {
+ *   width: 20px;  // Increased from 16px
+ *   height: 20px; // Increased from 16px
+ * }
+ * 
+ * .menu-item-icon {
+ *   width: 40px;  // Increased from 32px
+ *   height: 40px; // Increased from 32px
+ * }
+ * 
+ * .quick-launch-btn img {
+ *   width: 24px;  // Increased from 16px
+ *   height: 24px; // Increased from 16px
+ * }
+ * 
+ * .window-title-icon {
+ *   width: 16px;  // Keep small for title bar
+ *   height: 16px; // Keep small for title bar
+ * }
+ * 
+ * STEP 5: Adjust desktop icon layout
+ * ----------------------------------
+ * Larger icons require layout adjustments:
+ * 
+ * .desktop-icon {
+ *   width: 88px;  // Increased from 72px
+ * }
+ * 
+ * .desktop-icon-title {
+ *   max-width: 86px; // Increased from 70px
+ * }
+ * 
+ * STEP 6: Consider DPI scaling
+ * ---------------------------
+ * For high-DPI displays, consider:
+ * - Using SVG icons where possible
+ * - Or providing 2x versions (64x64 for 32x32 base)
+ * - Or using CSS transform: scale() for crispness
+ * 
+ * ============================================
+ * ICON SOURCES COMPARISON
+ * ============================================
+ * 
+ * | Source | Size | Style | URL |
+ * |--------|------|-------|-----|
+ * | win98icons.alexmeub.com | 32x32 | Classic small | Current |
+ * | windows98-ui.netlify.app | 48x48+ | Larger detailed | Target |
+ * | oldwindowsicons.tumblr.com | Various | Games | Games |
+ * 
+ * ============================================
+ * RECOMMENDED ICON REPLACEMENTS
+ * ============================================
+ * 
+ * Download these from windows98-ui.netlify.app:
+ * 
+ * 1. SYSTEM
+ *    - my-computer.png (48x48)
+ *    - recycle-bin.png (48x48)
+ *    - network-neighborhood.png (48x48)
+ *    - control-panel.png (48x48)
+ * 
+ * 2. OFFICE
+ *    - notepad.png (48x48)
+ *    - calculator.png (48x48)
+ *    - paint.png (48x48)
+ *    - wordpad.png (48x48)
+ * 
+ * 3. MEDIA
+ *    - winamp.png (48x48) - for Music
+ *    - media-player.png (48x48) - for Videos
+ *    - cd-player.png (48x48)
+ * 
+ * 4. INTERNET
+ *    - internet-explorer.png (48x48)
+ *    - outlook-express.png (48x48)
+ *    - msn.png (48x48)
+ * 
+ * 5. FOLDERS
+ *    - folder-open.png (48x48)
+ *    - folder-closed.png (48x48)
+ *    - my-documents.png (48x48)
+ * 
+ * ============================================
+ * FILES TO MODIFY
+ * ============================================
+ * 
+ * 1. public/icons/w98/large/ - CREATE directory for new icons
+ * 2. src/lib/icons.ts - Update icon paths
+ * 3. src/app/w98-core.css - Update sizing CSS
+ * 
+ * ============================================
+ * SUCCESS CRITERIA
+ * ============================================
+ * 
+ * [ ] All desktop icons are 48x48 or larger
+ * [ ] All icons render crisply without blur
+ * [ ] Icon layout accommodates larger sizes
+ * [ ] Consistent visual style across all icons
+ * [ ] Matches windows98-ui.netlify.app aesthetic
+ */
+
