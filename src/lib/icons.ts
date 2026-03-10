@@ -29,9 +29,13 @@ export const W98_ICONS = {
   calculator: `${W98_ICON_BASE}/calculator.png`,
 } as const
 
-// Game icons from oldwindowsicons.tumblr.com
+// Game icons - using local Windows 98 icons where available, Tumblr for others
 export const GAME_ICONS = {
-  minesweeper: 'https://64.media.tumblr.com/8222719ffdb590013745eb8edcc9b92b/97172f523bbb5fff-9b/s1280x1920/5814bb41ea1796e57a69c59539fab9e65150eeef.png',
+  // Local Windows 98 icons
+  minesweeper: '/icons/w98/minesweeper.png',
+  minesweeperAlt: '/icons/w98/minesweeper_alt.png',
+  
+  // External game icons from oldwindowsicons.tumblr.com
   doom: 'https://64.media.tumblr.com/1d89dfa76381e5c14210a2149c83790d/7a15f84c681c1cf9-c1/s1280x1920/0515f04e1d3b21bad4a765f5fb8d26e563aeb889.png',
   doom2: 'https://64.media.tumblr.com/1d89dfa76381e5c14210a2149c83790d/7a15f84c681c1cf9-c1/s1280x1920/0515f04e1d3b21bad4a765f5fb8d26e563aeb889.png',
   wolf3d: 'https://64.media.tumblr.com/03ca99b583b89836639fd084d844f6f1/880d28626954f370-a4/s1280x1920/d1f7d2abbd3c547d07b4967435ef6a9d59b44067.png',
