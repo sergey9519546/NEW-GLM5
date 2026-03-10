@@ -1,13 +1,24 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useSystemStore, useAdminBiosStore } from '@/store'
 import { W98_ICONS } from '@/lib/icons'
 
-type ContentTab = 'general' | 'tracks' | 'photos' | 'videos' | 'news'
+type ContentTab = 'general' | 'tracks' | 'photos' | 'videos' | 'news' | 'wallpapers' | 'shows'
 
 function createId(prefix: string) {
   return `${prefix}-${globalThis.crypto.randomUUID()}`
+}
+
+interface Show {
+  id: string
+  title: string
+  venue: string
+  date: string
+  description?: string
+  ticketUrl?: string
+  posterUrl?: string
+  status: string
 }
 
 export function AdminPanel() {
@@ -19,6 +30,7 @@ export function AdminPanel() {
     photos,
     videos,
     news,
+    wallpapers,
     setBandName,
     setBandBio,
     addTrack,
@@ -33,6 +45,9 @@ export function AdminPanel() {
     addNews,
     updateNews,
     removeNews,
+    addWallpaper,
+    updateWallpaper,
+    removeWallpaper,
     saveContent,
     resetToDefaults,
     isSaving,
@@ -42,6 +57,48 @@ export function AdminPanel() {
   
   const [loginError, setLoginError] = useState('')
   const [isLoggingIn, setIsLoggingIn] = useState(false)
+
+  // Shows state (managed via /api/shows, not desktop-content)
+  const [shows, setShows] = useState<Show[]>([])
+  const [showsLoading, setShowsLoading] = useState(false)
+
+  const fetchShows = useCallback(async () => {
+    setShowsLoading(true)
+    try {
+      const res = await fetch('/api/shows')
+      if (res.ok) {
+        const data = await res.json()
+        setShows(data.shows ?? [])
+      }
+    } catch { /* ignore */ } finally { setShowsLoading(false) }
+  }, [])
+
+  useEffect(() => {
+    if (adminUnlocked) void fetchShows()
+  }, [adminUnlocked, fetchShows])
+
+  const addShow = async () => {
+    try {
+      const res = await fetch('/api/shows', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: 'New Show',
+          venue: 'TBD',
+          date: new Date().toISOString(),
+          status: 'upcoming',
+        }),
+      })
+      if (res.ok) void fetchShows()
+    } catch { /* ignore */ }
+  }
+
+  const deleteShow = async (id: string) => {
+    try {
+      await fetch(`/api/shows/${id}`, { method: 'DELETE' })
+      setShows(prev => prev.filter(s => s.id !== id))
+    } catch { /* ignore */ }
+  }
 
   const handleLogin = async () => {
     setLoginError('')
@@ -124,6 +181,18 @@ export function AdminPanel() {
           onClick={() => setActiveTab('news')}
         >
           News
+        </button>
+        <button 
+          className={`admin-tab ${activeTab === 'wallpapers' ? 'active' : ''}`}
+          onClick={() => setActiveTab('wallpapers')}
+        >
+          Wallpapers
+        </button>
+        <button 
+          className={`admin-tab ${activeTab === 'shows' ? 'active' : ''}`}
+          onClick={() => setActiveTab('shows')}
+        >
+          Shows
         </button>
       </div>
       
@@ -323,6 +392,80 @@ export function AdminPanel() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {activeTab === 'wallpapers' && (
+          <div className="admin-section">
+            <div className="admin-actions">
+              <button
+                className="win95-button"
+                onClick={() => addWallpaper({
+                  id: createId('wp'),
+                  title: 'New Wallpaper',
+                  url: 'https://picsum.photos/1920/1080?random=' + Date.now(),
+                })}
+              >
+                Add Wallpaper
+              </button>
+              <button className="win95-button" onClick={() => void saveContent()} disabled={isSaving}>
+                {isSaving ? 'Saving...' : 'Save Wallpapers'}
+              </button>
+            </div>
+            {wallpapers.map((wp) => (
+              <div key={wp.id} className="admin-field-group">
+                <div className="admin-field">
+                  <label>Title</label>
+                  <input type="text" value={wp.title} onChange={(e) => updateWallpaper(wp.id, { title: e.target.value })} className="win95-input" />
+                </div>
+                <div className="admin-field">
+                  <label>Image URL</label>
+                  <input type="text" value={wp.url} onChange={(e) => updateWallpaper(wp.id, { url: e.target.value })} className="win95-input" />
+                </div>
+                <div className="admin-field admin-inline-actions">
+                  <button className="win95-button" onClick={() => removeWallpaper(wp.id)}>Remove</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {activeTab === 'shows' && (
+          <div className="admin-section">
+            <div className="admin-actions">
+              <button className="win95-button" onClick={() => void addShow()}>
+                Add Show
+              </button>
+              <button className="win95-button" onClick={() => void fetchShows()} disabled={showsLoading}>
+                {showsLoading ? 'Loading...' : 'Refresh'}
+              </button>
+            </div>
+            {shows.map((show) => (
+              <div key={show.id} className="admin-field-group">
+                <div className="admin-field">
+                  <label>Title</label>
+                  <input type="text" value={show.title} readOnly className="win95-input" />
+                </div>
+                <div className="admin-field">
+                  <label>Venue</label>
+                  <input type="text" value={show.venue} readOnly className="win95-input" />
+                </div>
+                <div className="admin-field">
+                  <label>Date</label>
+                  <input type="text" value={new Date(show.date).toLocaleDateString()} readOnly className="win95-input" />
+                </div>
+                <div className="admin-field">
+                  <label>Status</label>
+                  <input type="text" value={show.status} readOnly className="win95-input" />
+                </div>
+                <div className="admin-field admin-inline-actions">
+                  <button className="win95-button" onClick={() => void deleteShow(show.id)}>Remove</button>
+                </div>
+              </div>
+            ))}
+            {shows.length === 0 && !showsLoading && (
+              <p style={{ textAlign: 'center', color: 'var(--w98-dark-gray)', padding: '20px' }}>No shows yet.</p>
+            )}
           </div>
         )}
       </div>
