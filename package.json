@@ -8,7 +8,7 @@
     "build": "next build",
     "start": "NODE_ENV=production next start -p 3000 2>&1 | tee server.log",
     "cf:build": "opennextjs-cloudflare build",
-    "cf:preview": "opennextjs-cloudflare preview",
+    "cf:preview": "wrangler dev --config wrangler.jsonc",
     "cf:deploy": "CI=1 wrangler deploy --config wrangler.jsonc",
     "lint": "eslint .",
     "db:push": "prisma db push",

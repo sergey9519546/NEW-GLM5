@@ -46,6 +46,13 @@ If you need a local D1 instance for previewing with Wrangler:
 npm run db:d1:local
 ```
 
+To preview the built worker locally, run the build first and then start Wrangler:
+
+```bash
+npm run cf:build
+npm run cf:preview
+```
+
 ## 5. Deploy
 
 ```bash
@@ -56,6 +63,12 @@ The `cf:deploy` script uses the same direct Wrangler command that was verified t
 
 ```bash
 CI=1 wrangler deploy --config wrangler.jsonc
+```
+
+The `cf:preview` script uses the direct Wrangler preview command:
+
+```bash
+wrangler dev --config wrangler.jsonc
 ```
 
 ## Important
