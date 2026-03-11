@@ -1,7 +1,7 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"main": ".open-next/worker.js",
-	"name": "new-glm5",
+	"name": "win95altitune",
 	"compatibility_date": "2026-03-10",
 	"compatibility_flags": [
 		"nodejs_compat",
