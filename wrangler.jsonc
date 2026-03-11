@@ -21,7 +21,7 @@
 		{
 			"binding": "DB",
 			"database_name": "new-glm5-db",
-			"database_id": "replace-with-d1-database-id",
+			"database_id": "c18e24a1-5c78-4317-8042-e1d4565edbdb",
 			"migrations_dir": "prisma/migrations"
 		}
 	],

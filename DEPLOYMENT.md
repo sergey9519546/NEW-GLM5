@@ -52,6 +52,12 @@ npm run db:d1:local
 npm run cf:deploy
 ```
 
+The `cf:deploy` script uses the same direct Wrangler command that was verified to work for this repo:
+
+```bash
+CI=1 wrangler deploy --config wrangler.jsonc
+```
+
 ## Important
 
 Do not use the Cloudflare Pages default Next.js build command `npx @cloudflare/next-on-pages@1` for this repo. That pipeline is incompatible with this app's Worker/OpenNext runtime setup and will fail on the dynamic API routes.
