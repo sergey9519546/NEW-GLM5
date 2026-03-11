@@ -59,10 +59,10 @@ npm run cf:preview
 npm run cf:deploy
 ```
 
-The `cf:deploy` script uses the same direct Wrangler command that was verified to work for this repo:
+The `cf:deploy` script first builds the OpenNext worker output and then runs the direct Wrangler deploy command that was verified to work for this repo:
 
 ```bash
-CI=1 wrangler deploy --config wrangler.jsonc
+npm run cf:build && CI=1 wrangler deploy --config wrangler.jsonc
 ```
 
 The `cf:preview` script uses the direct Wrangler preview command:
